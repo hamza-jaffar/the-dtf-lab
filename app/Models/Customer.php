@@ -8,5 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable('name', 'phone', 'email', 'address')]
 class Customer extends Model
 {
-    //
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }
