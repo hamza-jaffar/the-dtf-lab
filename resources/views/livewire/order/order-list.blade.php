@@ -1,0 +1,96 @@
+<section class="w-full">
+    {{-- Header --}}
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <flux:heading size="xl">{{ __('Orders') }}</flux:heading>
+            <flux:subheading>
+                @if($phoneFilter)
+                    {{ __('Showing orders for phone: ') }}<strong>{{ $phoneFilter }}</strong>
+                    <flux:link href="{{ route('orders') }}" wire:navigate class="ml-2 text-sm">
+                        {{ __('View all orders') }}
+                    </flux:link>
+                @else
+                    {{ __('Manage all customer orders.') }}
+                @endif
+            </flux:subheading>
+        </div>
+
+        <flux:modal.trigger name="order-form-modal">
+            <flux:button variant="primary" icon="plus">
+                {{ __('New Order') }}
+            </flux:button>
+        </flux:modal.trigger>
+    </div>
+
+    {{-- Search --}}
+    <div class="mb-4 flex items-center gap-3">
+        <div class="w-full max-w-sm">
+            <flux:input wire:model.live.debounce.300ms="search"
+                        icon="magnifying-glass"
+                        placeholder="Search by order # or customer..."
+                        type="search" />
+        </div>
+    </div>
+
+    {{-- Table --}}
+    <flux:table>
+        <flux:table.columns>
+            <flux:table.column sortable :sorted="$sortBy === 'order_number'" :direction="$sortDirection"
+                wire:click="sort('order_number')">{{ __('Order #') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
+                wire:click="sort('created_at')">{{ __('Date') }}</flux:table.column>
+            <flux:table.column>{{ __('Customer') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'status'" :direction="$sortDirection"
+                wire:click="sort('status')">{{ __('Status') }}</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'total_amount'" :direction="$sortDirection"
+                wire:click="sort('total_amount')">{{ __('Total') }}</flux:table.column>
+            <flux:table.column>{{ __('Paid') }}</flux:table.column>
+            <flux:table.column>{{ __('Items') }}</flux:table.column>
+            <flux:table.column>{{ __('Actions') }}</flux:table.column>
+        </flux:table.columns>
+
+        <flux:table.rows>
+            @forelse ($orders as $order)
+                <flux:table.row :key="$order->id">
+                    <flux:table.cell class="font-mono font-semibold">{{ $order->order_number }}</flux:table.cell>
+                    <flux:table.cell>{{ $order->created_at->format('d M Y') }}</flux:table.cell>
+                    <flux:table.cell>
+                        <div class="font-medium">{{ $order->customer->name }}</div>
+                        <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:badge :color="$order->status->color()" size="sm">
+                            {{ $order->status->label() }}
+                        </flux:badge>
+                    </flux:table.cell>
+                    <flux:table.cell>{{ number_format($order->total_amount) }}</flux:table.cell>
+                    <flux:table.cell>{{ $order->paid_amount ? number_format($order->paid_amount) : '-' }}</flux:table.cell>
+                    <flux:table.cell>{{ $order->items_count ?? $order->items->count() }}</flux:table.cell>
+                    <flux:table.cell>
+                        <div class="flex items-center gap-1">
+                            <flux:button variant="subtle" size="sm" icon="pencil"
+                                wire:click="$dispatch('edit-order', { orderId: {{ $order->id }} })" />
+                            <flux:button variant="subtle" size="sm" icon="trash" color="danger"
+                                wire:click="deleteOrder({{ $order->id }})"
+                                wire:confirm="Are you sure you want to delete order {{ $order->order_number }}?" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="8" class="text-center text-zinc-500 py-12">
+                        <flux:icon name="inbox" class="mx-auto mb-2 size-8 opacity-40" />
+                        {{ __('No orders found.') }}
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
+        </flux:table.rows>
+    </flux:table>
+
+    <div class="mt-4">
+        {{ $orders->links() }}
+    </div>
+
+    {{-- Order Form Modal (shared component) --}}
+    @livewire('order.order-form')
+</section>

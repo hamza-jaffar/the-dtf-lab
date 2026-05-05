@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->integer('width');
-            $table->integer('height');
-            $table->integer('square_inches'); // Auto calculated
-            $table->integer('rate_per_inch');
-            $table->integer('total_price'); // Auto calculated
+            $table->decimal('width', 10, 2);
+            $table->decimal('height', 10, 2);
+            $table->decimal('square_inches', 10, 2); // Auto calculated
+            $table->decimal('rate_per_inch', 10, 2);
+            $table->decimal('total_price', 12, 2);   // Auto calculated
             $table->string('design_name')->nullable();
             $table->integer('quantity')->default(1);
             $table->timestamps();

@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('design_files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_item_id')->constrained('order_item')->cascadeOnDelete();
+            $table->foreignId('order_item_id')->constrained('order_items')->cascadeOnDelete();
             $table->string('file_path');
+            $table->string('original_name')->nullable();
             $table->timestamps();
         });
     }

@@ -6,7 +6,7 @@
         </div>
 
         <flux:modal.trigger name="customer-modal">
-            <flux:button variant="primary" wire:click="create">{{ __('New Customer') }}</flux:button>
+            <flux:button variant="primary" wire:click="create" icon="plus">{{ __('New Customer') }}</flux:button>
         </flux:modal.trigger>
     </div>
 
@@ -25,29 +25,62 @@
                 wire:click="sort('phone')">{{ __('Phone') }}</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'email'" :direction="$sortDirection"
                 wire:click="sort('email')">{{ __('Email') }}</flux:table.column>
+            <flux:table.column>{{ __('Orders') }}</flux:table.column>
             <flux:table.column>{{ __('Actions') }}</flux:table.column>
         </flux:table.columns>
 
         <flux:table.rows>
             @forelse ($customers as $customer)
                 <flux:table.row :key="$customer->id">
-                    <flux:table.cell>{{ $customer->name }}</flux:table.cell>
-                    <flux:table.cell>{{ $customer->phone }}</flux:cell>
-                        <flux:table.cell>{{ $customer->email ?: '-' }}</flux:table.cell>
-                        <flux:table.cell>
-                            <flux:button variant="subtle" size="sm" icon="pencil" wire:click="edit({{ $customer->id }})" />
-                            <flux:button variant="subtle" size="sm" icon="trash" color="danger"
+                    <flux:table.cell class="font-medium">{{ $customer->name }}</flux:table.cell>
+                    <flux:table.cell>{{ $customer->phone }}</flux:table.cell>
+                    <flux:table.cell>{{ $customer->email ?: '-' }}</flux:table.cell>
+                    <flux:table.cell>
+                        <flux:link
+                            href="{{ route('orders', ['phone_number' => $customer->phone]) }}"
+                            wire:navigate
+                            class="text-sm">
+                            {{ $customer->orders_count ?? 0 }} {{ __('order(s)') }}
+                        </flux:link>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <div class="flex items-center gap-1">
+                            {{-- Add Order --}}
+                            <flux:button
+                                variant="subtle"
+                                size="sm"
+                                icon="plus-circle"
+                                title="{{ __('Add Order') }}"
+                                wire:click="$dispatch('open-order-form', { customerId: {{ $customer->id }} })" />
+
+                            {{-- Edit Customer --}}
+                            <flux:button
+                                variant="subtle"
+                                size="sm"
+                                icon="pencil"
+                                title="{{ __('Edit Customer') }}"
+                                wire:click="edit({{ $customer->id }})" />
+
+                            {{-- Delete Customer --}}
+                            <flux:button
+                                variant="subtle"
+                                size="sm"
+                                icon="trash"
+                                color="danger"
+                                title="{{ __('Delete Customer') }}"
                                 wire:click="delete({{ $customer->id }})"
-                                wire:confirm="Are you sure you want to delete this customer?" />
-                        </flux:table.cell>
-                        </flux:row>
+                                wire:confirm="Are you sure you want to delete {{ $customer->name }}?" />
+                        </div>
+                    </flux:table.cell>
+                </flux:table.row>
             @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="4" class="text-center text-gray-500 py-8">
-                                {{ __('No customers found.') }}
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
+                <flux:table.row>
+                    <flux:table.cell colspan="5" class="text-center text-zinc-500 py-12">
+                        <flux:icon name="users" class="mx-auto mb-2 size-8 opacity-40" />
+                        {{ __('No customers found.') }}
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
         </flux:table.rows>
     </flux:table>
 
@@ -55,6 +88,7 @@
         {{ $customers->links() }}
     </div>
 
+    {{-- Customer CRUD Modal --}}
     <flux:modal name="customer-modal" class="md:w-[600px] space-y-6">
         <div>
             <flux:heading size="lg">{{ $isEditing ? __('Edit Customer') : __('New Customer') }}</flux:heading>
@@ -82,4 +116,7 @@
             </div>
         </form>
     </flux:modal>
+
+    {{-- Order Form Modal (listens for open-order-form event) --}}
+    @livewire('order.order-form')
 </section>

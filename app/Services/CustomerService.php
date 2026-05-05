@@ -13,6 +13,7 @@ class CustomerService
     public function getPaginated(string $search = '', string $sortBy = 'created_at', string $sortDirection = 'desc', int $perPage = 10): LengthAwarePaginator
     {
         return Customer::query()
+            ->withCount('orders')
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhere('phone', 'like', '%' . $search . '%')

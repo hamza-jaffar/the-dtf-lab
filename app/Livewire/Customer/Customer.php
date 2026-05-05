@@ -4,6 +4,7 @@ namespace App\Livewire\Customer;
 
 use App\Services\CustomerService;
 use Flux\Flux;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -76,16 +77,16 @@ class Customer extends Component
     public function edit(int $id, CustomerService $service)
     {
         $this->resetForm();
-        
+
         $customer = $service->find($id);
-        
+
         $this->customerId = $customer->id;
         $this->name = $customer->name;
         $this->phone = $customer->phone;
         $this->email = $customer->email;
         $this->address = $customer->address;
         $this->isEditing = true;
-        
+
         Flux::modal('customer-modal')->show();
     }
 
@@ -97,15 +98,22 @@ class Customer extends Component
 
         Flux::modal('customer-modal')->close();
         Flux::toast(variant: 'success', text: $this->customerId ? 'Customer updated.' : 'Customer created.');
-        
+
         $this->resetForm();
     }
 
     public function delete(int $id, CustomerService $service)
     {
         $service->delete($id);
-        
+
         Flux::toast(variant: 'success', text: 'Customer deleted.');
+    }
+
+    /** Refresh customer list when an order is saved from the embedded form */
+    #[On('order-saved')]
+    public function refreshList(): void
+    {
+        // Triggers re-render automatically
     }
 
     public function render(CustomerService $service)
