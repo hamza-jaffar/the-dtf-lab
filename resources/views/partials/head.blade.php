@@ -1,8 +1,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+@php
+    $companyService = app(\App\Services\CompanySettingService::class);
+    $companyName = $companyService->get(\App\Enums\CompanySettingKey::NAME) ?: config('app.name', 'Laravel');
+@endphp
 <title>
-    {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
+    {{ filled($title ?? null) ? $title.' - '.$companyName : $companyName }}
 </title>
 
 <link rel="icon" href="/favicon.ico" sizes="any">
