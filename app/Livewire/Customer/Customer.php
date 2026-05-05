@@ -5,9 +5,9 @@ namespace App\Livewire\Customer;
 use App\Services\CustomerService;
 use Flux\Flux;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Validation\Rule;
 
 #[Title('Customers')]
 class Customer extends Component
@@ -20,19 +20,32 @@ class Customer extends Component
 
     public $customerId = null;
 
-    #[Validate('required|string|max:255')]
     public $name = '';
-
-    #[Validate('required|string|max:20')]
     public $phone = '';
-
-    #[Validate('nullable|email|max:255')]
     public $email = '';
-
-    #[Validate('nullable|string')]
     public $address = '';
 
     public $isEditing = false;
+
+    public function rules()
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'phone' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('customers', 'phone')->ignore($this->customerId),
+            ],
+            'email' => [
+                'nullable',
+                'email',
+                'max:255',
+                Rule::unique('customers', 'email')->ignore($this->customerId),
+            ],
+            'address' => 'nullable|string',
+        ];
+    }
 
     public function updatedSearch()
     {

@@ -32,8 +32,8 @@ class CustomerService
             [
                 'name' => $data['name'],
                 'phone' => $data['phone'],
-                'email' => $data['email'] ?? null,
-                'address' => $data['address'] ?? null,
+                'email' => !empty($data['email']) ? $data['email'] : null,
+                'address' => !empty($data['address']) ? $data['address'] : null,
             ]
         );
     }
