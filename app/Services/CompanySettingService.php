@@ -4,16 +4,20 @@ namespace App\Services;
 
 use App\Models\CompanySettings;
 use App\Enums\CompanySettingKey;
+use Illuminate\Support\Facades\Cache;
 
 class CompanySettingService
 {
+    private const CACHE_KEY = 'company_settings';
+
     /**
      * Get a specific setting value.
      */
     public function get(CompanySettingKey $key, mixed $default = null): mixed
     {
-        $setting = CompanySettings::where('key', $key->value)->first();
-        return $setting ? $setting->value : $default;
+        $settings = $this->all();
+        
+        return $settings[$key->value] ?? $default;
     }
 
     /**
@@ -21,7 +25,9 @@ class CompanySettingService
      */
     public function all(): array
     {
-        return CompanySettings::pluck('value', 'key')->toArray();
+        return Cache::rememberForever(self::CACHE_KEY, function () {
+            return CompanySettings::pluck('value', 'key')->toArray();
+        });
     }
 
     /**
@@ -33,6 +39,8 @@ class CompanySettingService
             ['key' => $key->value],
             ['value' => $value]
         );
+        
+        Cache::forget(self::CACHE_KEY);
     }
 
     /**
@@ -43,8 +51,13 @@ class CompanySettingService
         foreach ($settings as $key => $value) {
             $enumKey = CompanySettingKey::tryFrom($key);
             if ($enumKey) {
-                $this->set($enumKey, $value);
+                CompanySettings::updateOrCreate(
+                    ['key' => $enumKey->value],
+                    ['value' => $value]
+                );
             }
         }
+        
+        Cache::forget(self::CACHE_KEY);
     }
 }
