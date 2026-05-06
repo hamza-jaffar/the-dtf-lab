@@ -20,6 +20,48 @@
         </flux:button>
     </div>
 
+    {{-- Summary Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20">
+            <div class="flex items-center justify-between">
+                <flux:icon name="banknotes" class="text-indigo-600 size-6" />
+                <flux:badge color="indigo" size="sm">{{ __('Total Sales') }}</flux:badge>
+            </div>
+            <div class="mt-2">
+                <div class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                    {{ format_money($stats['total_sales']) }}
+                </div>
+                <div class="text-xs text-zinc-500 mt-1">{{ __('Filtered revenue') }}</div>
+            </div>
+        </flux:card>
+
+        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+            <div class="flex items-center justify-between">
+                <flux:icon name="check-circle" class="text-emerald-600 size-6" />
+                <flux:badge color="emerald" size="sm">{{ __('Collected') }}</flux:badge>
+            </div>
+            <div class="mt-2">
+                <div class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                    {{ format_money($stats['total_collected']) }}
+                </div>
+                <div class="text-xs text-zinc-500 mt-1">{{ __('Actually received') }}</div>
+            </div>
+        </flux:card>
+
+        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20">
+            <div class="flex items-center justify-between">
+                <flux:icon name="clock" class="text-amber-600 size-6" />
+                <flux:badge color="amber" size="sm">{{ __('Pending') }}</flux:badge>
+            </div>
+            <div class="mt-2">
+                <div class="text-2xl font-bold tracking-tight text-red-500">
+                    {{ format_money($stats['total_pending']) }}
+                </div>
+                <div class="text-xs text-zinc-500 mt-1">{{ __('Outstanding payments') }}</div>
+            </div>
+        </flux:card>
+    </div>
+
     {{-- Search --}}
     <div class="mb-4 flex items-center gap-3">
         <div class="w-full max-w-sm">
@@ -85,7 +127,12 @@
                         @endif
                     </flux:table.cell>
                     <flux:table.cell>{{ format_money($order->total_amount) }}</flux:table.cell>
-                    <flux:table.cell>{{ format_money($order->paid_amount ?? 0) }}</flux:table.cell>
+                    <flux:table.cell>
+                        <span class="{{ $order->paid_amount > 0 ? 'text-green-500 font-medium' : 'text-zinc-500' }}">
+                            {{ format_money($order->paid_amount ?? 0) }}
+                        </span>
+
+                    </flux:table.cell>
                     <flux:table.cell>
                         <span class="{{ $order->pending_amount > 0 ? 'text-red-500 font-medium' : 'text-zinc-500' }}">
                             {{ format_money($order->pending_amount) }}

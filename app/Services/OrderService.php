@@ -15,6 +15,32 @@ use Illuminate\Support\Str;
 class OrderService
 {
     /**
+     * Get filtered statistics for orders.
+     */
+    public function getStats(string $search = '', ?string $phoneFilter = null): array
+    {
+        $query = Order::query()
+            ->when($phoneFilter, fn($q) => $q->whereHas(
+                'customer', fn($q) => $q->where('phone', $phoneFilter)
+            ))
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('order_number', 'like', '%' . $search . '%')
+                        ->orWhereHas('customer', fn($q) => $q
+                            ->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('phone', 'like', '%' . $search . '%')
+                        );
+                });
+            });
+
+        return [
+            'total_sales'     => (clone $query)->sum('total_amount'),
+            'total_collected' => (clone $query)->sum('paid_amount'),
+            'total_pending'   => (clone $query)->selectRaw('SUM(total_amount - COALESCE(paid_amount, 0)) as pending')->value('pending') ?? 0,
+        ];
+    }
+
+    /**
      * Get a paginated list of orders with optional phone filter, search, and sorting.
      */
     public function getPaginated(

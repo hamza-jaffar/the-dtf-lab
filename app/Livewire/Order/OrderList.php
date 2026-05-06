@@ -79,6 +79,10 @@ class OrderList extends Component
                 sortDirection:  $this->sortDirection,
                 phoneFilter:    $this->phoneFilter ?: null,
             ),
+            'stats'    => $service->getStats(
+                search:         $this->search,
+                phoneFilter:    $this->phoneFilter ?: null,
+            ),
             'statuses' => OrderStatus::cases(),
             'currency_symbol' => $currencyEnum->symbol(),
         ]);
