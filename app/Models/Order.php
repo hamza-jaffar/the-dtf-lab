@@ -19,6 +19,11 @@ class Order extends Model
         'paid_amount'  => 'integer',
     ];
 
+    public function getPendingAmountAttribute(): int
+    {
+        return $this->total_amount - ($this->paid_amount ?? 0);
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

@@ -15,11 +15,9 @@
             </flux:subheading>
         </div>
 
-        <flux:modal.trigger name="order-form-modal">
-            <flux:button variant="primary" icon="plus">
-                {{ __('New Order') }}
-            </flux:button>
-        </flux:modal.trigger>
+        <flux:button variant="primary" icon="plus" wire:click="$dispatch('open-order-form')">
+            {{ __('New Order') }}
+        </flux:button>
     </div>
 
     {{-- Search --}}
@@ -43,6 +41,7 @@
             <flux:table.column sortable :sorted="$sortBy === 'total_amount'" :direction="$sortDirection"
                 wire:click="sort('total_amount')">{{ __('Total') }}</flux:table.column>
             <flux:table.column>{{ __('Paid') }}</flux:table.column>
+            <flux:table.column>{{ __('Pending') }}</flux:table.column>
             <flux:table.column>{{ __('Items') }}</flux:table.column>
             <flux:table.column>{{ __('Actions') }}</flux:table.column>
         </flux:table.columns>
@@ -57,32 +56,41 @@
                         <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
                     </flux:table.cell>
                     <flux:table.cell>
-                        <flux:dropdown>
-                            <flux:button class="p-0! h-fit cursor-pointer" variant="ghost" title="Click to change status">
-                                <flux:badge :color="$order->status->color()" size="sm">
-                                    {{ $order->status->label() }}
-                                </flux:badge>
-                            </flux:button>
+                        @if ($order->status->label() === 'Delivered')
+                            <flux:badge :color="$order->status->color()" size="sm">
+                                {{ $order->status->label() }}
+                            </flux:badge>
+                        @else
+                            <flux:dropdown>
+                                <flux:button class="p-0! h-fit cursor-pointer" variant="ghost" title="Click to change status">
+                                    <flux:badge :color="$order->status->color()" size="sm">
+                                        {{ $order->status->label() }}
+                                    </flux:badge>
+                                </flux:button>
 
-                            <flux:menu>
-                                <flux:menu.group heading="Change Status">
-                                    @foreach ($statuses as $status)
-                                        <flux:menu.item
-                                            wire:click="updateStatus({{ $order->id }}, '{{ $status->value }}')"
-                                            :icon="$order->status === $status ? 'check' : ''"
-                                            class="{{ $order->status === $status ? 'font-semibold' : '' }}"
-                                        >
-                                            <flux:badge :color="$status->color()" size="sm">
-                                                {{ $status->label() }}
-                                            </flux:badge>
-                                        </flux:menu.item>
-                                    @endforeach
-                                </flux:menu.group>
-                            </flux:menu>
-                        </flux:dropdown>
+                                <flux:menu class="w-fit!" style="width: fit-content !important;">
+                                    <flux:menu.group heading="Change Status" class="w-fit!">
+                                        @foreach ($statuses as $status)
+                                            <flux:menu.item wire:click="updateStatus({{ $order->id }}, '{{ $status->value }}')"
+                                                :icon="$order->status === $status ? 'check' : ''"
+                                                class="{{ $order->status === $status ? 'font-semibold' : '' }}">
+                                                <flux:badge :color="$status->color()" size="sm">
+                                                    {{ $status->label() }}
+                                                </flux:badge>
+                                            </flux:menu.item>
+                                        @endforeach
+                                    </flux:menu.group>
+                                </flux:menu>
+                            </flux:dropdown>
+                        @endif
                     </flux:table.cell>
-                    <flux:table.cell>{{ number_format($order->total_amount) }}</flux:table.cell>
-                    <flux:table.cell>{{ $order->paid_amount ? number_format($order->paid_amount) : '-' }}</flux:table.cell>
+                    <flux:table.cell>{{ format_money($order->total_amount) }}</flux:table.cell>
+                    <flux:table.cell>{{ $order->paid_amount ? format_money($order->paid_amount) : '-' }}</flux:table.cell>
+                    <flux:table.cell>
+                        <span class="{{ $order->pending_amount > 0 ? 'text-red-500 font-medium' : 'text-zinc-500' }}">
+                            {{ format_money($order->pending_amount) }}
+                        </span>
+                    </flux:table.cell>
                     <flux:table.cell>{{ $order->items_count ?? $order->items->count() }}</flux:table.cell>
                     <flux:table.cell>
                         <div class="flex items-center gap-1">
@@ -109,6 +117,5 @@
         {{ $orders->links() }}
     </div>
 
-    {{-- Order Form Modal (shared component) --}}
     @livewire('order.order-form')
 </section>

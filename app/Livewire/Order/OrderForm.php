@@ -23,6 +23,7 @@ class OrderForm extends Component
     public ?int   $orderId    = null;
     public ?int   $customerId = null;
     public string $status     = 'pending';
+    public ?float $paidAmount = null;
     public string $notes      = '';
 
     // ------------------------------------------------------------------
@@ -53,12 +54,17 @@ class OrderForm extends Component
     // ------------------------------------------------------------------
 
     #[On('open-order-form')]
-    public function openForCustomer(int $customerId, CompanySettingService $settings): void
+    public function openForCreate(?int $customerId = null): void
     {
+        $settings = app(CompanySettingService::class);
         $this->resetAll();
+        
         $this->customerId  = $customerId;
         $this->defaultRate = (float) ($settings->get(CompanySettingKey::DEFAULT_RATE) ?? 0);
+        
+        // Always start with one empty item pre-filled with the default rate
         $this->addItem();
+        
         Flux::modal('order-form-modal')->show();
     }
 
@@ -72,6 +78,7 @@ class OrderForm extends Component
         $this->orderId     = $order->id;
         $this->customerId  = $order->customer_id;
         $this->status      = $order->status->value;
+        $this->paidAmount  = (float) $order->paid_amount;
         $this->notes       = $order->notes ?? '';
         $this->isEditing   = true;
 
@@ -153,6 +160,7 @@ class OrderForm extends Component
         $orderData = [
             'customer_id' => $this->customerId,
             'status'      => $this->status,
+            'paid_amount' => $this->paidAmount,
             'notes'       => $this->notes,
         ];
 
@@ -176,9 +184,13 @@ class OrderForm extends Component
     // ------------------------------------------------------------------
     private function resetAll(): void
     {
-        $this->reset(['orderId', 'customerId', 'status', 'notes', 'items', 'isEditing']);
+        $this->reset(['orderId', 'customerId', 'status', 'paidAmount', 'notes', 'items', 'isEditing']);
         $this->status = 'pending';
         $this->resetValidation();
+        
+        // Re-fetch default rate to ensure it's current
+        $settings = app(CompanySettingService::class);
+        $this->defaultRate = (float) ($settings->get(CompanySettingKey::DEFAULT_RATE) ?? 0);
     }
 
     public function render()

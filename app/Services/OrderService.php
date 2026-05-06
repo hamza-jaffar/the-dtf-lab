@@ -53,6 +53,7 @@ class OrderService
                 'order_number' => $this->generateOrderNumber(),
                 'customer_id'  => $orderData['customer_id'],
                 'status'       => $orderData['status'] ?? OrderStatus::Pending->value,
+                'paid_amount'  => $orderData['paid_amount'] ?? 0,
                 'notes'        => $orderData['notes'] ?? null,
                 'total_amount' => 0,
             ]);
@@ -72,6 +73,7 @@ class OrderService
             $order->update([
                 'customer_id' => $orderData['customer_id'],
                 'status'      => $orderData['status'],
+                'paid_amount' => $orderData['paid_amount'] ?? 0,
                 'notes'       => $orderData['notes'] ?? null,
             ]);
 

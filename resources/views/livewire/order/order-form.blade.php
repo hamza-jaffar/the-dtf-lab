@@ -1,4 +1,4 @@
-<flux:modal name="order-form-modal" class="md:w-[780px] space-y-6" wire:ignore.self>
+<flux:modal name="order-form-modal" class="md:w-195 space-y-6" wire:ignore.self>
 
     {{-- Header --}}
     <div>
@@ -32,14 +32,13 @@
                     <flux:select.option :value="$s->value">{{ $s->label() }}</flux:select.option>
                 @endforeach
             </flux:select>
+
+            <flux:input wire:model.live="paidAmount" :label="__('Paid Amount')" type="number" step="any" placeholder="0.00" />
         </div>
 
         <flux:textarea wire:model="notes" :label="__('Notes')" rows="2"
                        placeholder="{{ __('Optional notes about this order…') }}" />
 
-        {{-- ================================================================
-             Line Items — Alpine handles real-time calculations client-side
-             ================================================================ --}}
         <div
             x-data="{
                 items: $wire.entangle('items'),
@@ -71,6 +70,14 @@
 
                 grandTotalFormatted() {
                     return this.grandTotal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                },
+
+                get pendingAmount() {
+                    return this.grandTotal - (parseFloat($wire.paidAmount) || 0);
+                },
+
+                pendingAmountFormatted() {
+                    return this.pendingAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 }
             }"
         >
@@ -203,10 +210,18 @@
             </div>
 
             {{-- Grand Total banner --}}
-            <div class="mt-4 rounded-xl bg-zinc-900 dark:bg-zinc-700 px-5 py-4 flex items-center justify-between">
-                <span class="text-sm font-medium text-zinc-300">{{ __('Grand Total') }}</span>
-                <span class="text-2xl font-bold text-white tracking-tight"
-                      x-text="grandTotalFormatted()">0</span>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+                <div class="rounded-xl bg-zinc-900 dark:bg-zinc-700 px-5 py-4 flex items-center justify-between">
+                    <span class="text-sm font-medium text-zinc-300">{{ __('Grand Total') }}</span>
+                    <span class="text-2xl font-bold text-white tracking-tight"
+                          x-text="grandTotalFormatted()">{{ format_money(0) }}</span>
+                </div>
+                <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 px-5 py-4 flex items-center justify-between">
+                    <span class="text-sm font-medium text-zinc-500">{{ __('Pending') }}</span>
+                    <span class="text-2xl font-bold tracking-tight"
+                          :class="pendingAmount > 0 ? 'text-red-500' : 'text-zinc-400'"
+                          x-text="pendingAmountFormatted()">0.00</span>
+                </div>
             </div>
 
         </div>{{-- end x-data --}}

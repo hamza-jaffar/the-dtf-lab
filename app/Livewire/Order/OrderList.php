@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Order;
 
+use App\Enums\CompanySettingKey;
+use App\Enums\Currency;
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Services\CompanySettingService;
 use App\Services\OrderService;
 use Flux\Flux;
 use Livewire\Attributes\Title;
@@ -57,6 +60,10 @@ class OrderList extends Component
 
     public function render(OrderService $service)
     {
+        $settings = app(CompanySettingService::class);
+        $currency = $settings->get(CompanySettingKey::CURRENCY);
+        $currencyEnum = Currency::tryFrom($currency);
+
         return view('livewire.order.order-list', [
             'orders'   => $service->getPaginated(
                 search:         $this->search,
@@ -65,6 +72,7 @@ class OrderList extends Component
                 phoneFilter:    $this->phoneFilter ?: null,
             ),
             'statuses' => OrderStatus::cases(),
+            'currency_symbol' => $currencyEnum->symbol(),
         ]);
     }
 }

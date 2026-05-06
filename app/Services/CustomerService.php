@@ -14,6 +14,8 @@ class CustomerService
     {
         return Customer::query()
             ->withCount('orders')
+            ->withSum('orders', 'total_amount')
+            ->withSum('orders', 'paid_amount')
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', '%' . $search . '%')
                     ->orWhere('phone', 'like', '%' . $search . '%')

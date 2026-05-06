@@ -25,6 +25,7 @@
                 wire:click="sort('phone')">{{ __('Phone') }}</flux:table.column>
             <flux:table.column sortable :sorted="$sortBy === 'email'" :direction="$sortDirection"
                 wire:click="sort('email')">{{ __('Email') }}</flux:table.column>
+                <flux:table.column>{{ __('Pending Payout') }}</flux:table.column>
             <flux:table.column>{{ __('Orders') }}</flux:table.column>
             <flux:table.column>{{ __('Actions') }}</flux:table.column>
         </flux:table.columns>
@@ -35,6 +36,9 @@
                     <flux:table.cell class="font-medium">{{ $customer->name }}</flux:table.cell>
                     <flux:table.cell>{{ $customer->phone }}</flux:table.cell>
                     <flux:table.cell>{{ $customer->email ?: '-' }}</flux:table.cell>
+                    <flux:table.cell>
+                        {{ format_money(($customer->orders_sum_total_amount ?? 0) - ($customer->orders_sum_paid_amount ?? 0)) }}
+                    </flux:table.cell>
                     <flux:table.cell>
                         <flux:link
                             href="{{ route('orders', ['phone_number' => $customer->phone]) }}"
