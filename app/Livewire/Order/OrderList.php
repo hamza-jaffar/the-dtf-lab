@@ -3,6 +3,7 @@
 namespace App\Livewire\Order;
 
 use App\Enums\OrderStatus;
+use App\Models\Order;
 use App\Services\OrderService;
 use Flux\Flux;
 use Livewire\Attributes\Title;
@@ -38,6 +39,13 @@ class OrderList extends Component
             $this->sortDirection = 'asc';
         }
         $this->resetPage();
+    }
+
+    public function updateStatus(int $orderId, string $status): void
+    {
+        $order = Order::findOrFail($orderId);
+        $order->update(['status' => $status]);
+        Flux::toast(variant: 'success', text: 'Order status updated to ' . OrderStatus::from($status)->label() . '.');
     }
 
     public function deleteOrder(int $id, OrderService $service): void

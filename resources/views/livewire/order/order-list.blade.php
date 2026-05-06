@@ -25,10 +25,8 @@
     {{-- Search --}}
     <div class="mb-4 flex items-center gap-3">
         <div class="w-full max-w-sm">
-            <flux:input wire:model.live.debounce.300ms="search"
-                        icon="magnifying-glass"
-                        placeholder="Search by order # or customer..."
-                        type="search" />
+            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+                placeholder="Search by order # or customer..." type="search" />
         </div>
     </div>
 
@@ -59,9 +57,29 @@
                         <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
                     </flux:table.cell>
                     <flux:table.cell>
-                        <flux:badge :color="$order->status->color()" size="sm">
-                            {{ $order->status->label() }}
-                        </flux:badge>
+                        <flux:dropdown>
+                            <flux:button class="p-0! h-fit cursor-pointer" variant="ghost" title="Click to change status">
+                                <flux:badge :color="$order->status->color()" size="sm">
+                                    {{ $order->status->label() }}
+                                </flux:badge>
+                            </flux:button>
+
+                            <flux:menu>
+                                <flux:menu.group heading="Change Status">
+                                    @foreach ($statuses as $status)
+                                        <flux:menu.item
+                                            wire:click="updateStatus({{ $order->id }}, '{{ $status->value }}')"
+                                            :icon="$order->status === $status ? 'check' : ''"
+                                            class="{{ $order->status === $status ? 'font-semibold' : '' }}"
+                                        >
+                                            <flux:badge :color="$status->color()" size="sm">
+                                                {{ $status->label() }}
+                                            </flux:badge>
+                                        </flux:menu.item>
+                                    @endforeach
+                                </flux:menu.group>
+                            </flux:menu>
+                        </flux:dropdown>
                     </flux:table.cell>
                     <flux:table.cell>{{ number_format($order->total_amount) }}</flux:table.cell>
                     <flux:table.cell>{{ $order->paid_amount ? number_format($order->paid_amount) : '-' }}</flux:table.cell>
