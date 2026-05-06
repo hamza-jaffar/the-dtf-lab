@@ -85,7 +85,7 @@
                         @endif
                     </flux:table.cell>
                     <flux:table.cell>{{ format_money($order->total_amount) }}</flux:table.cell>
-                    <flux:table.cell>{{ $order->paid_amount ? format_money($order->paid_amount) : '-' }}</flux:table.cell>
+                    <flux:table.cell>{{ format_money($order->paid_amount ?? 0) }}</flux:table.cell>
                     <flux:table.cell>
                         <span class="{{ $order->pending_amount > 0 ? 'text-red-500 font-medium' : 'text-zinc-500' }}">
                             {{ format_money($order->pending_amount) }}
@@ -94,6 +94,8 @@
                     <flux:table.cell>{{ $order->items_count ?? $order->items->count() }}</flux:table.cell>
                     <flux:table.cell>
                         <div class="flex items-center gap-1">
+                            <flux:button variant="subtle" size="sm" icon="banknotes" title="{{ __('Record Payment') }}"
+                                wire:click="$dispatch('open-payment-modal', { orderId: {{ $order->id }} })" />
                             <flux:button variant="subtle" size="sm" icon="pencil"
                                 wire:click="$dispatch('edit-order', { orderId: {{ $order->id }} })" />
                             <flux:button variant="subtle" size="sm" icon="trash" color="danger"
@@ -118,4 +120,5 @@
     </div>
 
     @livewire('order.order-form')
+    @livewire('order.payment-form')
 </section>

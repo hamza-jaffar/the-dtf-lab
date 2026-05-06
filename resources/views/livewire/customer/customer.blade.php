@@ -36,7 +36,7 @@
                     <flux:table.cell class="font-medium">{{ $customer->name }}</flux:table.cell>
                     <flux:table.cell>{{ $customer->phone }}</flux:table.cell>
                     <flux:table.cell>{{ $customer->email ?: '-' }}</flux:table.cell>
-                    <flux:table.cell>
+                    <flux:table.cell class="text-red-500">
                         {{ format_money(($customer->orders_sum_total_amount ?? 0) - ($customer->orders_sum_paid_amount ?? 0)) }}
                     </flux:table.cell>
                     <flux:table.cell>
@@ -49,6 +49,14 @@
                     </flux:table.cell>
                     <flux:table.cell>
                         <div class="flex items-center gap-1">
+                            {{-- Record Payment --}}
+                            <flux:button
+                                variant="subtle"
+                                size="sm"
+                                icon="banknotes"
+                                title="{{ __('Record Payment') }}"
+                                wire:click="$dispatch('open-payment-modal', { customerId: {{ $customer->id }} })" />
+
                             {{-- Add Order --}}
                             <flux:button
                                 variant="subtle"
@@ -123,4 +131,5 @@
 
     {{-- Order Form Modal (listens for open-order-form event) --}}
     @livewire('order.order-form')
+    @livewire('order.payment-form')
 </section>

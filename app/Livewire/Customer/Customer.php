@@ -15,6 +15,13 @@ class Customer extends Component
 {
     use WithPagination;
 
+    #[On('order-saved')]
+    #[On('payment-saved')]
+    public function refresh(): void
+    {
+        // Simply refresh the component
+    }
+
     public $search = '';
     public $sortBy = 'name';
     public $sortDirection = 'asc';

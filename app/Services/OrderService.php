@@ -60,6 +60,17 @@ class OrderService
 
             $this->syncItems($order, $items);
 
+            // Create initial payment record if paid_amount > 0
+            if (($orderData['paid_amount'] ?? 0) > 0) {
+                Payments::create([
+                    'order_id'       => $order->id,
+                    'amount'         => $orderData['paid_amount'],
+                    'payment_method' => 'cash',
+                    'payment_date'   => now(),
+                    'notes'          => 'Initial payment upon order creation.',
+                ]);
+            }
+
             return $order->fresh(['items.designFiles']);
         });
     }

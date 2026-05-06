@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Services\CompanySettingService;
 use App\Services\OrderService;
 use Flux\Flux;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -18,6 +19,13 @@ use Livewire\WithPagination;
 class OrderList extends Component
 {
     use WithPagination;
+
+    #[On('order-saved')]
+    #[On('payment-saved')]
+    public function refresh(): void
+    {
+        // Simply refresh the component
+    }
 
     #[Url(as: 'search')]
     public string $search = '';
