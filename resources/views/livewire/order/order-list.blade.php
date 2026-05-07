@@ -62,13 +62,45 @@
         </flux:card>
     </div>
 
-    {{-- Search --}}
-    <div class="mb-4 flex items-center gap-3">
-        <div class="w-full max-w-sm">
-            <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
-                placeholder="Search by order # or customer..." type="search" />
+    {{-- Search and Filters --}}
+    <flux:card class="mb-6 p-4 bg-zinc-50/50 dark:bg-white/5 border-zinc-200/50 dark:border-white/10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-end">
+            <div class="xl:col-span-1">
+                <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
+                    label="{{ __('Search') }}" placeholder="{{ __('Order # or name...') }}" type="search" />
+            </div>
+
+            <div>
+                <flux:input type="date" wire:model.live="startDate" label="{{ __('From') }}" />
+            </div>
+
+            <div>
+                <flux:input type="date" wire:model.live="endDate" label="{{ __('To') }}" />
+            </div>
+
+            <div>
+                <flux:select wire:model.live="statusFilter" label="{{ __('Status') }}">
+                    <flux:select.option value="">{{ __('All Statuses') }}</flux:select.option>
+                    @foreach($statuses as $status)
+                        <flux:select.option :value="$status->value">{{ $status->label() }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <div class="flex items-center">
+                <flux:button icon="arrow-path" variant="subtle" class="w-full" wire:click="resetFilters">
+                    {{ __('Reset') }}
+                </flux:button>
+
+                <flux:button icon="document-arrow-down" variant="subtle" class="w-full"
+                    href="{{ route('orders.export.pdf', ['search' => $search, 'phone_number' => $phoneFilter, 'start_date' => $startDate, 'end_date' => $endDate, 'status' => $statusFilter]) }}"
+                    target="_blank"
+                    title="{{ __('Export Summary PDF') }}">
+                    {{ __('Export') }}
+                </flux:button>
+            </div>
         </div>
-    </div>
+    </flux:card>
 
     {{-- Table --}}
     <flux:table>
@@ -91,7 +123,11 @@
         <flux:table.rows>
             @forelse ($orders as $order)
                 <flux:table.row :key="$order->id">
-                    <flux:table.cell class="font-mono font-semibold">{{ $order->order_number }}</flux:table.cell>
+                    <flux:table.cell class="font-mono font-semibold">
+                        <flux:link href="{{ route('orders.detail', ['id' => $order->id]) }}" wire:navigate>
+                            {{ $order->order_number }}
+                        </flux:link>
+                    </flux:table.cell>
                     <flux:table.cell>{{ $order->created_at->format('d M Y') }}</flux:table.cell>
                     <flux:table.cell>
                         <div class="font-medium">{{ $order->customer->name }}</div>
@@ -141,7 +177,10 @@
                     <flux:table.cell>{{ $order->items_count ?? $order->items->count() }}</flux:table.cell>
                     <flux:table.cell>
                         <div class="flex items-center gap-1">
+                            <flux:button variant="subtle" size="sm" icon="document-text" title="{{ __('Invoice') }}"
+                                href="{{ route('orders.invoice.pdf', ['order' => $order->id]) }}" target="_blank" />
                             <flux:button variant="subtle" size="sm" icon="banknotes" title="{{ __('Record Payment') }}"
+                                :disabled="$order->pending_amount <= 0"
                                 wire:click="$dispatch('open-payment-modal', { orderId: {{ $order->id }} })" />
                             <flux:button variant="subtle" size="sm" icon="pencil"
                                 wire:click="$dispatch('edit-order', { orderId: {{ $order->id }} })" />

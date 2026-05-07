@@ -33,11 +33,41 @@ class OrderList extends Component
     #[Url(as: 'phone_number')]
     public string $phoneFilter = '';
 
+    #[Url(as: 'start_date')]
+    public string $startDate = '';
+
+    #[Url(as: 'end_date')]
+    public string $endDate = '';
+
+    #[Url(as: 'status')]
+    public string $statusFilter = '';
+
     public string $sortBy        = 'created_at';
     public string $sortDirection = 'desc';
 
     public function updatedSearch(): void
     {
+        $this->resetPage();
+    }
+
+    public function updatedStartDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function resetFilters(): void
+    {
+        $this->reset(['search', 'startDate', 'endDate', 'statusFilter', 'phoneFilter']);
         $this->resetPage();
     }
 
@@ -78,10 +108,16 @@ class OrderList extends Component
                 sortBy:         $this->sortBy,
                 sortDirection:  $this->sortDirection,
                 phoneFilter:    $this->phoneFilter ?: null,
+                startDate:      $this->startDate ?: null,
+                endDate:        $this->endDate ?: null,
+                status:         $this->statusFilter ?: null,
             ),
             'stats'    => $service->getStats(
                 search:         $this->search,
                 phoneFilter:    $this->phoneFilter ?: null,
+                startDate:      $this->startDate ?: null,
+                endDate:        $this->endDate ?: null,
+                status:         $this->statusFilter ?: null,
             ),
             'statuses' => OrderStatus::cases(),
             'currency_symbol' => $currencyEnum->symbol(),

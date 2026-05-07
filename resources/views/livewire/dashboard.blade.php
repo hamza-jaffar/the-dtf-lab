@@ -111,7 +111,11 @@
                 <flux:table.rows>
                     @foreach($recentOrders as $order)
                         <flux:table.row>
-                            <flux:table.cell class="font-mono font-bold">{{ $order->order_number }}</flux:table.cell>
+                            <flux:table.cell class="font-mono font-bold">
+                                <flux:link href="{{ route('orders.detail', ['id' => $order->id]) }}" wire:navigate>
+                                    {{ $order->order_number }}
+                                </flux:link>
+                            </flux:table.cell>
                             <flux:table.cell>
                                 <div class="text-sm font-medium">{{ $order->customer->name }}</div>
                                 <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
@@ -147,7 +151,11 @@
                         <flux:table.row>
                             <flux:table.cell>{{ $payment->payment_date->format('d M, H:i') }}</flux:table.cell>
                             <flux:table.cell>{{ $payment->order->customer->name }}</flux:table.cell>
-                            <flux:table.cell class="font-mono">{{ $payment->order->order_number }}</flux:table.cell>
+                            <flux:table.cell class="font-mono">
+                                <flux:link href="{{ route('orders.detail', ['id' => $payment->order->id]) }}" wire:navigate>
+                                    {{ $payment->order->order_number }}
+                                </flux:link>
+                            </flux:table.cell>
                             <flux:table.cell>
                                 <flux:badge size="sm" variant="outline">{{ Str::headline($payment->payment_method) }}</flux:badge>
                             </flux:table.cell>

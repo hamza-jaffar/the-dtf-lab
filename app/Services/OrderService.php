@@ -17,12 +17,15 @@ class OrderService
     /**
      * Get filtered statistics for orders.
      */
-    public function getStats(string $search = '', ?string $phoneFilter = null): array
+    public function getStats(string $search = '', ?string $phoneFilter = null, ?string $startDate = null, ?string $endDate = null, ?string $status = null): array
     {
         $query = Order::query()
             ->when($phoneFilter, fn($q) => $q->whereHas(
                 'customer', fn($q) => $q->where('phone', $phoneFilter)
             ))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('order_number', 'like', '%' . $search . '%')
@@ -48,6 +51,9 @@ class OrderService
         string $sortBy = 'created_at',
         string $sortDirection = 'desc',
         ?string $phoneFilter = null,
+        ?string $startDate = null,
+        ?string $endDate = null,
+        ?string $status = null,
         int $perPage = 15
     ): LengthAwarePaginator {
         return Order::query()
@@ -55,12 +61,17 @@ class OrderService
             ->when($phoneFilter, fn($q) => $q->whereHas(
                 'customer', fn($q) => $q->where('phone', $phoneFilter)
             ))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
             ->when($search, function ($query) use ($search) {
-                $query->where('order_number', 'like', '%' . $search . '%')
-                    ->orWhereHas('customer', fn($q) => $q
-                        ->where('name', 'like', '%' . $search . '%')
-                        ->orWhere('phone', 'like', '%' . $search . '%')
-                    );
+                $query->where(function ($q) use ($search) {
+                    $q->where('order_number', 'like', '%' . $search . '%')
+                        ->orWhereHas('customer', fn($q) => $q
+                            ->where('name', 'like', '%' . $search . '%')
+                            ->orWhere('phone', 'like', '%' . $search . '%')
+                        );
+                });
             })
             ->orderBy($sortBy, $sortDirection)
             ->paginate($perPage);

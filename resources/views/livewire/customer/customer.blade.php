@@ -50,8 +50,13 @@
                     </flux:table.cell>
                     <flux:table.cell>
                         <div class="flex items-center gap-1">
+                            {{-- Payment History PDF --}}
+                            <flux:button variant="subtle" size="sm" icon="credit-card" title="{{ __('Payment History PDF') }}"
+                                href="{{ route('customers.payments.pdf', ['customer' => $customer->id]) }}" target="_blank" />
+
                             {{-- Record Payment --}}
                             <flux:button variant="subtle" size="sm" icon="banknotes" title="{{ __('Record Payment') }}"
+                                :disabled="(($customer->orders_sum_total_amount ?? 0) - ($customer->orders_sum_paid_amount ?? 0)) <= 0"
                                 wire:click="$dispatch('open-payment-modal', { customerId: {{ $customer->id }} })" />
 
                             {{-- Add Order --}}
