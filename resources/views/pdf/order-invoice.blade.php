@@ -35,7 +35,18 @@
         <tbody>
             @foreach($order->items as $item)
                 <tr>
-                    <td>{{ $item->design_name ?? 'N/A' }}</td>
+                    <td>
+                        <div>{{ $item->design_name ?? 'N/A' }}</div>
+                        @if($item->designFiles->count() > 0)
+                            @foreach($item->designFiles as $file)
+                                <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                                    <a href="{{ url(Storage::url($file->file_path)) }}">{{ $file->original_name }}</a>
+                                </div>
+                            @endforeach
+                        @else
+                            <div style="font-size: 10px; color: #666; margin-top: 4px;">{{ __('No file uploaded') }}</div>
+                        @endif
+                    </td>
                     <td>{{ $item->width }}" x {{ $item->height }}" ({{ $item->square_inches }} sq.in)</td>
                     <td>{{ $currency_symbol }} {{ number_format($item->rate_per_inch, 2) }}</td>
                     <td>{{ $item->quantity }}</td>

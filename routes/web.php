@@ -3,6 +3,18 @@
 use App\Livewire\Customer\Customer;
 use App\Livewire\Order\OrderList;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Artisan;
+
+// Route::get('/clear-config', function() {
+//     Artisan::call('optimize:clear');
+//     return 'Configuration cache cleared!';
+// });
+
+// Route::get('/storage-link', function () {
+//     Artisan::call('storage:link');
+//     return 'Storage link successfully';
+// });
+
 
 Route::redirect('/', 'login')->name('home');
 

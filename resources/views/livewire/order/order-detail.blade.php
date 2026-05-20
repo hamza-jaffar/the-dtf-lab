@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="flex gap-2">
-            <flux:button icon="document-text" variant="primary" 
+            <flux:button icon="document-text" variant="primary"
                 href="{{ route('orders.invoice.pdf', ['order' => $order->id]) }}" target="_blank">
                 {{ __('Download Invoice') }}
             </flux:button>
@@ -42,13 +42,15 @@
                                 <flux:table.cell>
                                     <div class="font-medium text-zinc-900 dark:text-white">{{ $item->design_name ?? 'N/A' }}</div>
                                     @if($item->designFiles->count() > 0)
-                                        <div class="flex gap-1 mt-1">
+                                        <div class="flex gap-1 mt-1 flex-wrap">
                                             @foreach($item->designFiles as $file)
                                                 <flux:link href="{{ Storage::url($file->file_path) }}" target="_blank" class="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1 rounded">
                                                     {{ Str::limit($file->original_name, 15) }}
                                                 </flux:link>
                                             @endforeach
                                         </div>
+                                    @else
+                                        <div class="text-[10px] text-zinc-500 mt-1">{{ __('No file uploaded') }}</div>
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell>
@@ -158,8 +160,8 @@
                         <flux:label>{{ __('Update Status') }}</flux:label>
                         <div class="grid grid-cols-2 gap-2 mt-2">
                             @foreach($statuses as $status)
-                                <flux:button 
-                                    size="sm" 
+                                <flux:button
+                                    size="sm"
                                     variant="{{ $order->status === $status ? 'filled' : 'subtle' }}"
                                     color="{{ $order->status === $status ? $status->color() : '' }}"
                                     wire:click="updateStatus('{{ $status->value }}')"
@@ -170,7 +172,7 @@
                             @endforeach
                         </div>
                     </div>
-                    
+
                     @if($order->notes)
                         <flux:separator />
                         <div>

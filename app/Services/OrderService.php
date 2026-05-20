@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\DesignFile;
+use App\Models\Payments;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
