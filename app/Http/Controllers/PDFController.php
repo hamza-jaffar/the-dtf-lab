@@ -65,6 +65,37 @@ class PDFController extends Controller
         return $pdf->stream('orders-summary.pdf');
     }
 
+    public function purchasesSummary(Request $request, \App\Services\PurchaseService $service)
+    {
+        $search      = (string) $request->get('search', '');
+        $startDate   = $request->get('start_date');
+        $endDate     = $request->get('end_date');
+        $sortBy      = $request->get('sort', 'purchase_date');
+        $sortDir     = $request->get('dir', 'desc');
+
+        $purchases = \App\Models\Purchase::query()
+            ->when($startDate, fn($q) => $q->whereDate('purchase_date', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('purchase_date', '<=', $endDate))
+            ->when($search, function ($query) use ($search) {
+                $query->where('item_name', 'like', '%' . $search . '%')
+                      ->orWhere('notes', 'like', '%' . $search . '%');
+            })
+            ->orderBy($sortBy, $sortDir)
+            ->get();
+
+        $stats = $service->getStats($startDate, $endDate);
+
+        $data = array_merge($this->getCompanyData(), [
+            'purchases' => $purchases,
+            'stats' => $stats,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        $pdf = Pdf::loadView('pdf.purchases-summary', $data);
+        return $pdf->stream('purchases-summary.pdf');
+    }
+
     public function customerPayments(Customer $customer)
     {
         $payments = Payments::whereHas('order', fn($q) => $q->where('customer_id', $customer->id))
