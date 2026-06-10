@@ -46,6 +46,12 @@ class CustomerService
      */
     public function delete(int $id): bool
     {
+        $customer = Customer::findOrFail($id);
+
+        if ($customer->orders()->count() > 0) {
+            return false;
+        }
+
         return Customer::findOrFail($id)->delete();
     }
 

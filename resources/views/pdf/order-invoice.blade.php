@@ -47,8 +47,21 @@
                             <div style="font-size: 10px; color: #666; margin-top: 4px;">{{ __('No file uploaded') }}</div>
                         @endif
                     </td>
-                    <td>{{ $item->width }}" x {{ $item->height }}" ({{ $item->square_inches }} sq.in)</td>
-                    <td>{{ $currency_symbol }} {{ number_format($item->rate_per_inch, 2) }}</td>
+                    <td>
+                        @if(($item->pricing_type ?? 'per_sqin') === 'per_piece')
+                            <span style="color: #aaa;">—</span>
+                        @else
+                            {{ $item->width }}" x {{ $item->height }}" ({{ $item->square_inches }} sq.in)
+                        @endif
+                    </td>
+                    <td>
+                        {{ $currency_symbol }} {{ number_format($item->rate_per_inch, 2) }}
+                        @if(($item->pricing_type ?? 'per_sqin') === 'per_piece')
+                            <span style="font-size:10px;color:#aaa;">/piece</span>
+                        @else
+                            <span style="font-size:10px;color:#aaa;">/in²</span>
+                        @endif
+                    </td>
                     <td>{{ $item->quantity }}</td>
                     <td class="text-right">{{ $currency_symbol }} {{ number_format($item->total_price, 2) }}</td>
                 </tr>
@@ -57,7 +70,7 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="4" class="text-right font-bold">Grand Total:</td>
-                <td class="text-right font-bold">{{ $currency_symbol }} {{ number_format($order->total_amount, 2) }}</td>
+                <td class="text-right font-bold">{{ $currency_symbol }} {{ number_format($order->effective_total, 2) }}</td>
             </tr>
             <tr>
                 <td colspan="4" class="text-right">Amount Paid:</td>

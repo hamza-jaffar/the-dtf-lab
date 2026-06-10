@@ -111,9 +111,14 @@ class Customer extends Component
 
     public function delete(int $id, CustomerService $service)
     {
-        $service->delete($id);
+        $response =  $service->delete($id);
 
-        Flux::toast(variant: 'success', text: 'Customer deleted.');
+        if($response || $response == false) {
+            Flux::toast(variant: 'error', text: 'Customer has order, so it cannot de  be deleted. delete order first');
+        } else {
+            Flux::toast(variant: 'success', text: 'Customer deleted.');
+        }
+
     }
 
     /** Refresh customer list when an order is saved from the embedded form */

@@ -6,13 +6,15 @@
             <flux:subheading>{{ __('Welcome back! Here is what is happening with your lab today.') }}</flux:subheading>
         </div>
         <div class="flex gap-2">
-            <flux:button icon="plus" variant="primary" wire:click="$dispatch('open-order-form')">{{ __('New Order') }}</flux:button>
+            <flux:button icon="plus" variant="primary" wire:click="$dispatch('open-order-form')">{{ __('New Order') }}
+            </flux:button>
         </div>
     </div>
 
     {{-- Stats Grid --}}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20">
+        <flux:card
+            class="flex flex-col gap-2 p-5 bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20">
             <div class="flex items-center justify-between">
                 <flux:icon name="banknotes" class="text-indigo-600 size-6" />
                 <flux:badge color="indigo" size="sm">{{ __('Total Sales') }}</flux:badge>
@@ -25,7 +27,8 @@
             </div>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+        <flux:card
+            class="flex flex-col gap-2 p-5 bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
             <div class="flex items-center justify-between">
                 <flux:icon name="check-circle" class="text-emerald-600 size-6" />
                 <flux:badge color="emerald" size="sm">{{ __('Collected') }}</flux:badge>
@@ -38,7 +41,8 @@
             </div>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20">
+        <flux:card
+            class="flex flex-col gap-2 p-5 bg-gradient-to-br from-amber-500/10 to-transparent border-amber-500/20">
             <div class="flex items-center justify-between">
                 <flux:icon name="clock" class="text-amber-600 size-6" />
                 <flux:badge color="amber" size="sm">{{ __('Pending') }}</flux:badge>
@@ -51,7 +55,8 @@
             </div>
         </flux:card>
 
-        <flux:card class="flex flex-col gap-2 p-5 bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20">
+        <flux:card
+            class="flex flex-col gap-2 p-5 bg-gradient-to-br from-purple-500/10 to-transparent border-purple-500/20">
             <div class="flex items-center justify-between">
                 <flux:icon name="users" class="text-purple-600 size-6" />
                 <flux:badge color="purple" size="sm">{{ __('Customers') }}</flux:badge>
@@ -75,21 +80,23 @@
                     @php $count = $statusDistribution[$status->value] ?? 0; @endphp
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <div class="size-2 rounded-full" style="background-color: var(--flux-color-{{ $status->color() }}-500)"></div>
+                            <div class="size-2 rounded-full"
+                                style="background-color: var(--flux-color-{{ $status->color() }}-500)"></div>
                             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ $status->label() }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-sm font-bold text-zinc-900 dark:text-white">{{ $count }}</span>
                             <div class="w-24 h-1.5 bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                                <div class="h-full rounded-full" 
-                                     style="width: {{ $stats['total_orders'] > 0 ? ($count / $stats['total_orders'] * 100) : 0 }}%; background-color: var(--flux-color-{{ $status->color() }}-500)">
+                                <div class="h-full rounded-full"
+                                    style="width: {{ $stats['total_orders'] > 0 ? ($count / $stats['total_orders'] * 100) : 0 }}%; background-color: var(--flux-color-{{ $status->color() }}-500)">
                                 </div>
                             </div>
                         </div>
                     </div>
                 @endforeach
             </div>
-            <div class="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
+            <div
+                class="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-xs text-zinc-500">
                 <span>{{ __('Total Orders processed') }}</span>
                 <span class="font-bold text-zinc-900 dark:text-white">{{ $stats['total_orders'] }}</span>
             </div>
@@ -99,7 +106,8 @@
         <flux:card class="lg:col-span-2 space-y-4">
             <div class="flex items-center justify-between">
                 <flux:heading size="md">{{ __('Recent Orders') }}</flux:heading>
-                <flux:link href="{{ route('orders') }}" wire:navigate class="text-xs font-medium">{{ __('View All') }}</flux:link>
+                <flux:link href="{{ route('orders') }}" wire:navigate class="text-xs font-medium">{{ __('View All') }}
+                </flux:link>
             </div>
             <flux:table>
                 <flux:table.columns>
@@ -117,11 +125,12 @@
                                 </flux:link>
                             </flux:table.cell>
                             <flux:table.cell>
-                                <div class="text-sm font-medium">{{ $order->customer->name }}</div>
-                                <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
+                                <div class="text-sm font-medium">{{ $order->customer->name ?? '' }}</div>
+                                <div class="text-xs text-zinc-500">{{ $order->customer->phone ?? '' }}</div>
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge :color="$order->status->color()" size="sm">{{ $order->status->label() }}</flux:badge>
+                                <flux:badge :color="$order->status->color()" size="sm">{{ $order->status->label() }}
+                                </flux:badge>
                             </flux:table.cell>
                             <flux:table.cell class="font-medium">{{ format_money($order->total_amount) }}</flux:table.cell>
                         </flux:table.row>
@@ -150,14 +159,17 @@
                     @foreach($recentPayments as $payment)
                         <flux:table.row>
                             <flux:table.cell>{{ $payment->payment_date->format('d M, H:i') }}</flux:table.cell>
-                            <flux:table.cell>{{ $payment->order->customer->name }}</flux:table.cell>
+                            <flux:table.cell>{{ $payment->order->customer->name ?? '' }}</flux:table.cell>
                             <flux:table.cell class="font-mono">
-                                <flux:link href="{{ route('orders.detail', ['id' => $payment->order->id]) }}" wire:navigate>
-                                    {{ $payment->order->order_number }}
-                                </flux:link>
+                                @if($payment->order?->id != null)
+                                    <flux:link href="{{ route('orders.detail', ['id' => $payment->order->id]) }}" wire:navigate>
+                                        {{ $payment->order->order_number }}
+                                    </flux:link>
+                                @endif
                             </flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge size="sm" variant="outline">{{ Str::headline($payment->payment_method) }}</flux:badge>
+                                <flux:badge size="sm" variant="outline">{{ Str::headline($payment->payment_method) }}
+                                </flux:badge>
                             </flux:table.cell>
                             <flux:table.cell class="font-bold text-emerald-600 dark:text-emerald-400">
                                 {{ format_money($payment->amount) }}

@@ -130,8 +130,8 @@
                     </flux:table.cell>
                     <flux:table.cell>{{ $order->created_at->format('d M Y') }}</flux:table.cell>
                     <flux:table.cell>
-                        <div class="font-medium">{{ $order->customer->name }}</div>
-                        <div class="text-xs text-zinc-500">{{ $order->customer->phone }}</div>
+                        <div class="font-medium">{{ $order->customer->name ?? '' }}</div>
+                        <div class="text-xs text-zinc-500">{{ $order->customer->phone ?? '' }}</div>
                     </flux:table.cell>
                     <flux:table.cell>
                         @if ($order->status->label() === 'Delivered')

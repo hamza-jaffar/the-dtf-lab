@@ -46,19 +46,25 @@
 
                 get grandTotal() {
                     return this.items.reduce((sum, item) => {
+                        const r = parseFloat(item.rate_per_inch) || 0;
+                        const q = parseInt(item.quantity)        || 1;
+                        if (item.pricing_type === 'per_piece') {
+                            return sum + (r * q);
+                        }
                         const w = parseFloat(item.width)  || 0;
                         const h = parseFloat(item.height) || 0;
-                        const r = parseFloat(item.rate_per_inch) || 0;
-                        const q = parseInt(item.quantity)   || 1;
                         return sum + (w * h * r * q);
                     }, 0);
                 },
 
                 lineTotal(item) {
+                    const r = parseFloat(item.rate_per_inch) || 0;
+                    const q = parseInt(item.quantity)        || 1;
+                    if (item.pricing_type === 'per_piece') {
+                        return (r * q).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+                    }
                     const w = parseFloat(item.width)  || 0;
                     const h = parseFloat(item.height) || 0;
-                    const r = parseFloat(item.rate_per_inch) || 0;
-                    const q = parseInt(item.quantity)   || 1;
                     return (w * h * r * q).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                 },
 
@@ -102,9 +108,28 @@
                                          wire:click="removeItem({{ $i }})" />
                         @endif
 
+                        {{-- Pricing type selector --}}
+                        <div class="flex items-center gap-3">
+                            <flux:select
+                                wire:model.live="items.{{ $i }}.pricing_type"
+                                size="sm"
+                                class="w-48">
+                                <flux:select.option value="per_sqin">Rate / in²</flux:select.option>
+                                <flux:select.option value="per_piece">Per Piece</flux:select.option>
+                            </flux:select>
+                            <span class="text-xs text-zinc-400 dark:text-zinc-500">
+                                @if(($item['pricing_type'] ?? 'per_sqin') === 'per_piece')
+                                    Price = rate × qty
+                                @else
+                                    Price = width × height × rate × qty
+                                @endif
+                            </span>
+                        </div>
+
                         {{-- Dimension + rate inputs --}}
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <div>
+                            {{-- Width — hidden for per_piece --}}
+                            <div @class(['hidden' => ($item['pricing_type'] ?? 'per_sqin') === 'per_piece'])>
                                 <flux:input
                                     wire:model.live="items.{{ $i }}.width"
                                     :label="__('Width (in)')"
@@ -114,7 +139,8 @@
                                 @enderror
                             </div>
 
-                            <div>
+                            {{-- Height — hidden for per_piece --}}
+                            <div @class(['hidden' => ($item['pricing_type'] ?? 'per_sqin') === 'per_piece'])>
                                 <flux:input
                                     wire:model.live="items.{{ $i }}.height"
                                     :label="__('Height (in)')"
@@ -124,10 +150,11 @@
                                 @enderror
                             </div>
 
-                            <div>
+                            {{-- Rate — label changes based on pricing type --}}
+                            <div @class(['md:col-span-2' => ($item['pricing_type'] ?? 'per_sqin') === 'per_piece'])>
                                 <flux:input
                                     wire:model.live="items.{{ $i }}.rate_per_inch"
-                                    :label="__('Rate / in²')"
+                                    :label="($item['pricing_type'] ?? 'per_sqin') === 'per_piece' ? __('Price per Piece') : __('Rate / in²')"
                                     type="number"
                                     min="0.01"
                                     step="any"
@@ -162,8 +189,15 @@
                                     <span x-text="lineTotal(items[{{ $i }}])">—</span>
                                 </p>
                                 <p class="text-xs text-zinc-400 mt-0.5">
-                                    <span x-text="squareInches(items[{{ $i }}])">0</span>
-                                    {{ __('in²') }} × rate × qty
+                                    <template x-if="items[{{ $i }}].pricing_type === 'per_piece'">
+                                        <span>price per piece × qty</span>
+                                    </template>
+                                    <template x-if="items[{{ $i }}].pricing_type !== 'per_piece'">
+                                        <span>
+                                            <span x-text="squareInches(items[{{ $i }}])">0</span>
+                                            {{ __('in²') }} × rate × qty
+                                        </span>
+                                    </template>
                                 </p>
                             </div>
                         </div>

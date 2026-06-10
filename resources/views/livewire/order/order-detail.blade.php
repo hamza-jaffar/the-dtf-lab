@@ -54,10 +54,20 @@
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell>
-                                    {{ $item->width }}" x {{ $item->height }}"
-                                    <div class="text-xs text-zinc-500">{{ $item->square_inches }} {{ __('sq.in') }}</div>
+                                    @if(($item->pricing_type ?? 'per_sqin') === 'per_piece')
+                                        <span class="text-xs text-zinc-400 italic">—</span>
+                                    @else
+                                        {{ $item->width }}" x {{ $item->height }}"
+                                        <div class="text-xs text-zinc-500">{{ $item->square_inches }} {{ __('sq.in') }}</div>
+                                    @endif
                                 </flux:table.cell>
-                                <flux:table.cell>{{ format_money($item->rate_per_inch) }}/in</flux:table.cell>
+                                <flux:table.cell>
+                                    @if(($item->pricing_type ?? 'per_sqin') === 'per_piece')
+                                        {{ format_money($item->rate_per_inch) }} <span class="text-xs text-zinc-400">/piece</span>
+                                    @else
+                                        {{ format_money($item->rate_per_inch) }} <span class="text-xs text-zinc-400">/in²</span>
+                                    @endif
+                                </flux:table.cell>
                                 <flux:table.cell>{{ $item->quantity }}</flux:table.cell>
                                 <flux:table.cell class="text-right font-bold">{{ format_money($item->total_price) }}</flux:table.cell>
                             </flux:table.row>
@@ -67,9 +77,18 @@
 
                 <div class="border-t border-zinc-100 dark:border-zinc-800 pt-4 flex flex-col items-end gap-2">
                     <div class="flex justify-between w-full max-w-xs text-sm">
-                        <span class="text-zinc-500">{{ __('Total Amount') }}:</span>
+                        <span class="text-zinc-500">{{ __('Calculated Total') }}:</span>
                         <span class="font-bold text-zinc-900 dark:text-white">{{ format_money($order->total_amount) }}</span>
                     </div>
+                    @if($order->price_override !== null)
+                        <div class="flex justify-between w-full max-w-xs text-sm">
+                            <span class="text-zinc-500 flex items-center gap-1">
+                                {{ __('Override Total') }}
+                                <flux:badge size="xs" color="amber">overridden</flux:badge>
+                            </span>
+                            <span class="font-bold text-amber-600 dark:text-amber-400">{{ format_money($order->price_override) }}</span>
+                        </div>
+                    @endif
                     <div class="flex justify-between w-full max-w-xs text-sm">
                         <span class="text-zinc-500">{{ __('Paid Amount') }}:</span>
                         <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ format_money($order->paid_amount ?? 0) }}</span>
@@ -171,6 +190,49 @@
                                 </flux:button>
                             @endforeach
                         </div>
+                    </div>
+
+                    <flux:separator />
+
+                    {{-- Manual Price Override --}}
+                    <div>
+                        <flux:label>{{ __('Override Total Price') }}</flux:label>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 mb-2">
+                            {{ __('Set a custom total (e.g. after bargaining). Leave blank to use calculated total.') }}
+                        </p>
+                        <div class="flex gap-2 items-start">
+                            <div class="flex-1">
+                                <flux:input
+                                    wire:model="manualTotal"
+                                    type="number"
+                                    step="any"
+                                    min="0"
+                                    placeholder="{{ number_format($order->total_amount, 0) }}" />
+                                @error('manualTotal')
+                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <flux:button
+                                variant="primary"
+                                size="sm"
+                                wire:click="savePriceOverride"
+                                class="mt-0.5">
+                                {{ __('Save') }}
+                            </flux:button>
+                        </div>
+                        @if($order->price_override !== null)
+                            <div class="mt-2 flex items-center justify-between text-xs">
+                                <span class="text-amber-600 dark:text-amber-400 font-medium">
+                                    {{ __('Override active:') }} {{ format_money($order->price_override) }}
+                                </span>
+                                <button
+                                    type="button"
+                                    wire:click="clearPriceOverride"
+                                    class="text-zinc-400 hover:text-red-500 transition underline underline-offset-2">
+                                    {{ __('Clear override') }}
+                                </button>
+                            </div>
+                        @endif
                     </div>
 
                     @if($order->notes)

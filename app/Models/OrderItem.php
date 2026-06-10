@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['order_id', 'width', 'height', 'square_inches', 'rate_per_inch', 'total_price', 'design_name', 'quantity'])]
+#[Fillable(['order_id', 'width', 'height', 'square_inches', 'rate_per_inch', 'total_price', 'design_name', 'quantity', 'pricing_type'])]
 class OrderItem extends Model
 {
     protected $casts = [
@@ -17,6 +17,7 @@ class OrderItem extends Model
         'rate_per_inch' => 'float',
         'total_price'   => 'float',
         'quantity'      => 'integer',
+        'pricing_type'  => 'string',
     ];
 
     public function order(): BelongsTo

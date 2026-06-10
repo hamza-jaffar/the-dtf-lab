@@ -84,6 +84,7 @@ class OrderForm extends Component
 
         foreach ($order->items as $item) {
             $this->items[] = [
+                'pricing_type'   => $item->pricing_type ?? 'per_sqin',
                 'width'          => (string) $item->width,
                 'height'         => (string) $item->height,
                 'rate_per_inch'  => (string) $item->rate_per_inch,
@@ -107,6 +108,7 @@ class OrderForm extends Component
     public function addItem(): void
     {
         $this->items[] = [
+            'pricing_type'   => 'per_sqin',
             'width'          => '',
             'height'         => '',
             'rate_per_inch'  => $this->defaultRate > 0 ? (string) $this->defaultRate : '',
@@ -138,8 +140,11 @@ class OrderForm extends Component
         ];
 
         foreach ($this->items as $i => $item) {
-            $rules["items.{$i}.width"]         = 'required|numeric|min:0.01';
-            $rules["items.{$i}.height"]        = 'required|numeric|min:0.01';
+            $isPricedByArea = ($item['pricing_type'] ?? 'per_sqin') === 'per_sqin';
+
+            $rules["items.{$i}.pricing_type"] = 'required|in:per_sqin,per_piece';
+            $rules["items.{$i}.width"]         = $isPricedByArea ? 'required|numeric|min:0.01' : 'nullable|numeric|min:0';
+            $rules["items.{$i}.height"]        = $isPricedByArea ? 'required|numeric|min:0.01' : 'nullable|numeric|min:0';
             $rules["items.{$i}.rate_per_inch"] = 'required|numeric|min:0.01';
             $rules["items.{$i}.quantity"]      = 'required|integer|min:1';
             $rules["items.{$i}.design_name"]   = 'nullable|string|max:255';

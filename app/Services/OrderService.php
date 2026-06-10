@@ -120,10 +120,11 @@ class OrderService
     {
         return DB::transaction(function () use ($order, $orderData, $items) {
             $order->update([
-                'customer_id' => $orderData['customer_id'],
-                'status'      => $orderData['status'],
-                'paid_amount' => $orderData['paid_amount'] ?? 0,
-                'notes'       => $orderData['notes'] ?? null,
+                'customer_id'    => $orderData['customer_id'],
+                'status'         => $orderData['status'],
+                'paid_amount'    => $orderData['paid_amount'] ?? 0,
+                'notes'          => $orderData['notes'] ?? null,
+                'price_override' => $orderData['price_override'] ?? null,
             ]);
 
             // Remove old items (files are cascade-deleted by DB)
@@ -141,19 +142,41 @@ class OrderService
     }
 
     /**
+     * Update the manual price override on an order (client bargain adjustment).
+     */
+    public function updatePriceOverride(Order $order, ?float $override): Order
+    {
+        $order->update(['price_override' => $override]);
+        return $order->fresh();
+    }
+
+    /**
      * Delete an order and its associated storage files.
      */
-    public function delete(Order $order): bool
-    {
-        return DB::transaction(function () use ($order) {
-            foreach ($order->items as $item) {
-                foreach ($item->designFiles as $file) {
-                    Storage::disk('public')->delete($file->file_path);
-                }
+public function delete(Order $order): bool
+{
+    return DB::transaction(function () use ($order) {
+
+        // Delete design files from storage
+        foreach ($order->items as $item) {
+            foreach ($item->designFiles as $file) {
+                Storage::disk('public')->delete($file->file_path);
             }
-            return $order->delete();
-        });
-    }
+
+            // Optional: delete related design files records
+            $item->designFiles()->delete();
+        }
+
+        // Delete payments related to this order
+        $order->payments()->delete();
+
+        // Optional: delete order items
+        $order->items()->delete();
+
+        // Finally delete the order
+        return $order->delete();
+    });
+}
 
     /**
      * Find an order by ID with items and files eager loaded.
@@ -165,29 +188,43 @@ class OrderService
 
     /**
      * Build order items, compute totals, and store design files.
+     * Supports two pricing types:
+     *   per_sqin  — width × height × rate × qty  (default)
+     *   per_piece — rate × qty  (flat price per piece, dimensions ignored in calc)
      */
     private function syncItems(Order $order, array $items): void
     {
         $total = 0;
 
         foreach ($items as $itemData) {
-            $width        = (float) $itemData['width'];
-            $height       = (float) $itemData['height'];
+            $pricingType  = $itemData['pricing_type'] ?? 'per_sqin';
+            $width        = (float) ($itemData['width']  ?? 0);
+            $height       = (float) ($itemData['height'] ?? 0);
             $quantity     = (int)   ($itemData['quantity'] ?? 1);
-            $ratePerInch  = (float) $itemData['rate_per_inch'];
-            $squareInches = round($width * $height, 2);
-            $totalPrice   = round($squareInches * $ratePerInch * $quantity, 2);
-            $total       += $totalPrice;
+            $rate         = (float) $itemData['rate_per_inch'];
+
+            if ($pricingType === 'per_piece') {
+                // Flat rate per piece — dimensions irrelevant to price
+                $squareInches = round($width * $height, 2);
+                $totalPrice   = round($rate * $quantity, 2);
+            } else {
+                // Default: rate per square inch
+                $squareInches = round($width * $height, 2);
+                $totalPrice   = round($squareInches * $rate * $quantity, 2);
+            }
+
+            $total += $totalPrice;
 
             $item = OrderItem::create([
                 'order_id'      => $order->id,
                 'width'         => $width,
                 'height'        => $height,
                 'square_inches' => $squareInches,
-                'rate_per_inch' => $ratePerInch,
+                'rate_per_inch' => $rate,
                 'total_price'   => $totalPrice,
                 'design_name'   => $itemData['design_name'] ?? null,
                 'quantity'      => $quantity,
+                'pricing_type'  => $pricingType,
             ]);
 
             if (!empty($itemData['files'])) {
@@ -204,7 +241,8 @@ class OrderService
             }
         }
 
-        $order->update(['total_amount' => round($total, 2)]);
+        // Reset price_override when items are re-synced (order was edited from scratch)
+        $order->update(['total_amount' => round($total, 2), 'price_override' => null]);
     }
 
     /**

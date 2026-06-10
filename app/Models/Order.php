@@ -8,20 +8,29 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['order_number', 'customer_id', 'status', 'total_amount', 'paid_amount', 'notes', 'completed_at', 'delivered_at'])]
+#[Fillable(['order_number', 'customer_id', 'status', 'total_amount', 'price_override', 'paid_amount', 'notes', 'completed_at', 'delivered_at'])]
 class Order extends Model
 {
     protected $casts = [
-        'status'       => OrderStatus::class,
-        'completed_at' => 'datetime',
-        'delivered_at' => 'datetime',
-        'total_amount' => 'integer',
-        'paid_amount'  => 'integer',
+        'status'         => OrderStatus::class,
+        'completed_at'   => 'datetime',
+        'delivered_at'   => 'datetime',
+        'total_amount'   => 'float',
+        'price_override' => 'float',
+        'paid_amount'    => 'float',
     ];
 
-    public function getPendingAmountAttribute(): int
+    /**
+     * The effective total: use price_override if set, otherwise total_amount.
+     */
+    public function getEffectiveTotalAttribute(): float
     {
-        return $this->total_amount - ($this->paid_amount ?? 0);
+        return $this->price_override ?? $this->total_amount;
+    }
+
+    public function getPendingAmountAttribute(): float
+    {
+        return $this->effective_total - ($this->paid_amount ?? 0);
     }
 
     public function customer(): BelongsTo
