@@ -12,7 +12,7 @@
     </div>
 
     {{-- Stats Grid --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <flux:card
             class="flex flex-col gap-2 p-5 bg-gradient-to-br from-indigo-500/10 to-transparent border-indigo-500/20">
             <div class="flex items-center justify-between">
@@ -66,6 +66,20 @@
                     {{ number_format($stats['total_customers']) }}
                 </div>
                 <div class="text-xs text-zinc-500 mt-1">{{ __('Registered clients') }}</div>
+            </div>
+        </flux:card>
+        
+        <flux:card
+            class="flex flex-col gap-2 p-5 bg-gradient-to-br from-rose-500/10 to-transparent border-rose-500/20">
+            <div class="flex items-center justify-between">
+                <flux:icon name="shopping-bag" class="text-rose-600 size-6" />
+                <flux:badge color="rose" size="sm">{{ __('Expenses') }}</flux:badge>
+            </div>
+            <div class="mt-2">
+                <div class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                    {{ format_money($stats['total_purchases']) }}
+                </div>
+                <div class="text-xs text-zinc-500 mt-1">{{ __('Total money spent') }}</div>
             </div>
         </flux:card>
     </div>
