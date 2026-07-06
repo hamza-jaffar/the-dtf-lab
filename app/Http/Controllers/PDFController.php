@@ -98,14 +98,40 @@ class PDFController extends Controller
 
     public function customerPayments(Customer $customer)
     {
+        $orders = Order::where('customer_id', $customer->id)
+            ->get()
+            ->map(function ($order) {
+                return (object)[
+                    'type'         => 'order',
+                    'date'         => $order->created_at,
+                    'order_number' => $order->order_number,
+                    'method'       => 'Order Billed',
+                    'notes'        => $order->notes,
+                    'debit'        => $order->effective_total,
+                    'credit'       => 0,
+                ];
+            });
+
         $payments = Payments::whereHas('order', fn($q) => $q->where('customer_id', $customer->id))
             ->with('order')
-            ->orderBy('payment_date', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($payment) {
+                return (object)[
+                    'type'         => 'payment',
+                    'date'         => $payment->payment_date,
+                    'order_number' => $payment->order->order_number,
+                    'method'       => 'Payment (' . \Illuminate\Support\Str::headline($payment->payment_method) . ')',
+                    'notes'        => $payment->notes,
+                    'debit'        => 0,
+                    'credit'       => $payment->amount,
+                ];
+            });
+
+        $transactions = $orders->concat($payments)->sortBy('date')->values();
 
         $data = array_merge($this->getCompanyData(), [
-            'customer' => $customer,
-            'payments' => $payments,
+            'customer'     => $customer,
+            'transactions' => $transactions,
         ]);
 
         $pdf = Pdf::loadView('pdf.customer-payments', $data);
