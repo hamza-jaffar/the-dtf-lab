@@ -28,9 +28,16 @@ class Dashboard extends Component
 
         $typeTotals = Order::select('type')
             ->selectRaw('SUM(total_amount) as total_sales')
+            ->selectRaw('SUM(COALESCE(paid_amount, 0)) as total_paid')
             ->groupBy('type')
-            ->pluck('total_sales', 'type')
-            ->mapWithKeys(fn ($value, $key) => [$key => (float) $value]);
+            ->get()
+            ->mapWithKeys(function ($row) {
+                return [$row->type => [
+                    'sales' => (float) $row->total_sales,
+                    'paid' => (float) $row->total_paid,
+                    'pending' => max((float) $row->total_sales - (float) $row->total_paid, 0),
+                ]];
+            });
 
         $typeEarnings = collect([
             'dtf' => __('DTF'),
@@ -41,10 +48,14 @@ class Dashboard extends Component
             'screen_printing' => __('Screen Printing'),
             'rhinestone' => __('Rhinestone'),
         ])->map(function ($label, $type) use ($typeTotals) {
+            $totals = $typeTotals[$type] ?? ['sales' => 0, 'paid' => 0, 'pending' => 0];
+
             return [
                 'key' => $type,
                 'label' => $label,
-                'earnings' => (float) ($typeTotals[$type] ?? 0),
+                'earnings' => (float) ($totals['sales'] ?? 0),
+                'paid' => (float) ($totals['paid'] ?? 0),
+                'pending' => (float) ($totals['pending'] ?? 0),
             ];
         })->values();
 

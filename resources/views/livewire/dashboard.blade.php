@@ -96,12 +96,21 @@
                         <flux:icon name="banknotes" class="text-sky-600 size-6" />
                         <flux:badge color="sky" size="sm">{{ $typeEarning['label'] }}</flux:badge>
                     </div>
-                    <div class="mt-2">
-                        <div class="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                            {{ format_money($typeEarning['earnings']) }}
+                    <div class="mt-2 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium uppercase tracking-wide text-zinc-500">{{ __('Paid') }}</span>
+                            <span class="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+                                {{ format_money($typeEarning['paid']) }}
+                            </span>
                         </div>
-                        <div class="text-xs text-zinc-500 mt-1">{{ __('Total earning for this order type') }}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium uppercase tracking-wide text-zinc-500">{{ __('Pending') }}</span>
+                            <span class="text-lg font-semibold text-amber-600 dark:text-amber-400">
+                                {{ format_money($typeEarning['pending']) }}
+                            </span>
+                        </div>
                     </div>
+                    <div class="text-xs text-zinc-500 mt-2">{{ __('Paid vs pending for this order type') }}</div>
                 </flux:card>
             @endforeach
         </div>

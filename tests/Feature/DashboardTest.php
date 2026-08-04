@@ -45,4 +45,6 @@ test('dashboard shows earnings cards for each order type', function () {
     $response->assertOk();
     $response->assertSee('Earnings by Type');
     $response->assertSee('DTF');
+    $response->assertSee('Paid');
+    $response->assertSee('Pending');
 });
