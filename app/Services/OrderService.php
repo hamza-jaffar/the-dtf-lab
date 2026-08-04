@@ -3,15 +3,14 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Models\DesignFile;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\DesignFile;
 use App\Models\Payments;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class OrderService
 {
@@ -21,26 +20,26 @@ class OrderService
     public function getStats(string $search = '', ?string $phoneFilter = null, ?string $startDate = null, ?string $endDate = null, ?string $status = null): array
     {
         $query = Order::query()
-            ->when($phoneFilter, fn($q) => $q->whereHas(
-                'customer', fn($q) => $q->where('phone', $phoneFilter)
+            ->when($phoneFilter, fn ($q) => $q->whereHas(
+                'customer', fn ($q) => $q->where('phone', $phoneFilter)
             ))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($startDate, fn ($q) => $q->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('created_at', '<=', $endDate))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('order_number', 'like', '%' . $search . '%')
-                        ->orWhereHas('customer', fn($q) => $q
-                            ->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('phone', 'like', '%' . $search . '%')
+                    $q->where('order_number', 'like', '%'.$search.'%')
+                        ->orWhereHas('customer', fn ($q) => $q
+                            ->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('phone', 'like', '%'.$search.'%')
                         );
                 });
             });
 
         return [
-            'total_sales'     => (clone $query)->sum('total_amount'),
+            'total_sales' => (clone $query)->sum('total_amount'),
             'total_collected' => (clone $query)->sum('paid_amount'),
-            'total_pending'   => (clone $query)->selectRaw('SUM(total_amount - COALESCE(paid_amount, 0)) as pending')->value('pending') ?? 0,
+            'total_pending' => (clone $query)->selectRaw('SUM(total_amount - COALESCE(paid_amount, 0)) as pending')->value('pending') ?? 0,
         ];
     }
 
@@ -59,18 +58,18 @@ class OrderService
     ): LengthAwarePaginator {
         return Order::query()
             ->with(['customer'])
-            ->when($phoneFilter, fn($q) => $q->whereHas(
-                'customer', fn($q) => $q->where('phone', $phoneFilter)
+            ->when($phoneFilter, fn ($q) => $q->whereHas(
+                'customer', fn ($q) => $q->where('phone', $phoneFilter)
             ))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($startDate, fn($q) => $q->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn($q) => $q->whereDate('created_at', '<=', $endDate))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($startDate, fn ($q) => $q->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn ($q) => $q->whereDate('created_at', '<=', $endDate))
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('order_number', 'like', '%' . $search . '%')
-                        ->orWhereHas('customer', fn($q) => $q
-                            ->where('name', 'like', '%' . $search . '%')
-                            ->orWhere('phone', 'like', '%' . $search . '%')
+                    $q->where('order_number', 'like', '%'.$search.'%')
+                        ->orWhereHas('customer', fn ($q) => $q
+                            ->where('name', 'like', '%'.$search.'%')
+                            ->orWhere('phone', 'like', '%'.$search.'%')
                         );
                 });
             })
@@ -81,18 +80,18 @@ class OrderService
     /**
      * Create a new order with items and optional design files.
      *
-     * @param  array  $orderData
-     * @param  array  $items     [ ['width', 'height', 'rate_per_inch', 'quantity', 'design_name', 'files'[]] ]
+     * @param  array  $items  [ ['width', 'height', 'rate_per_inch', 'quantity', 'design_name', 'files'[]] ]
      */
     public function create(array $orderData, array $items): Order
     {
         return DB::transaction(function () use ($orderData, $items) {
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
-                'customer_id'  => $orderData['customer_id'],
-                'status'       => $orderData['status'] ?? OrderStatus::Pending->value,
-                'paid_amount'  => $orderData['paid_amount'] ?? 0,
-                'notes'        => $orderData['notes'] ?? null,
+                'customer_id' => $orderData['customer_id'],
+                'status' => $orderData['status'] ?? OrderStatus::Pending->value,
+                'type' => $orderData['type'] ?? 'dtf',
+                'paid_amount' => $orderData['paid_amount'] ?? 0,
+                'notes' => $orderData['notes'] ?? null,
                 'total_amount' => 0,
             ]);
 
@@ -101,11 +100,11 @@ class OrderService
             // Create initial payment record if paid_amount > 0
             if (($orderData['paid_amount'] ?? 0) > 0) {
                 Payments::create([
-                    'order_id'       => $order->id,
-                    'amount'         => $orderData['paid_amount'],
+                    'order_id' => $order->id,
+                    'amount' => $orderData['paid_amount'],
                     'payment_method' => 'cash',
-                    'payment_date'   => now(),
-                    'notes'          => 'Initial payment upon order creation.',
+                    'payment_date' => now(),
+                    'notes' => 'Initial payment upon order creation.',
                 ]);
             }
 
@@ -120,10 +119,11 @@ class OrderService
     {
         return DB::transaction(function () use ($order, $orderData, $items) {
             $order->update([
-                'customer_id'    => $orderData['customer_id'],
-                'status'         => $orderData['status'],
-                'paid_amount'    => $orderData['paid_amount'] ?? 0,
-                'notes'          => $orderData['notes'] ?? null,
+                'customer_id' => $orderData['customer_id'],
+                'status' => $orderData['status'],
+                'type' => $orderData['type'] ?? $order->type ?? 'dtf',
+                'paid_amount' => $orderData['paid_amount'] ?? 0,
+                'notes' => $orderData['notes'] ?? null,
                 'price_override' => $orderData['price_override'] ?? null,
             ]);
 
@@ -147,36 +147,37 @@ class OrderService
     public function updatePriceOverride(Order $order, ?float $override): Order
     {
         $order->update(['price_override' => $override]);
+
         return $order->fresh();
     }
 
     /**
      * Delete an order and its associated storage files.
      */
-public function delete(Order $order): bool
-{
-    return DB::transaction(function () use ($order) {
+    public function delete(Order $order): bool
+    {
+        return DB::transaction(function () use ($order) {
 
-        // Delete design files from storage
-        foreach ($order->items as $item) {
-            foreach ($item->designFiles as $file) {
-                Storage::disk('public')->delete($file->file_path);
+            // Delete design files from storage
+            foreach ($order->items as $item) {
+                foreach ($item->designFiles as $file) {
+                    Storage::disk('public')->delete($file->file_path);
+                }
+
+                // Optional: delete related design files records
+                $item->designFiles()->delete();
             }
 
-            // Optional: delete related design files records
-            $item->designFiles()->delete();
-        }
+            // Delete payments related to this order
+            $order->payments()->delete();
 
-        // Delete payments related to this order
-        $order->payments()->delete();
+            // Optional: delete order items
+            $order->items()->delete();
 
-        // Optional: delete order items
-        $order->items()->delete();
-
-        // Finally delete the order
-        return $order->delete();
-    });
-}
+            // Finally delete the order
+            return $order->delete();
+        });
+    }
 
     /**
      * Find an order by ID with items and files eager loaded.
@@ -197,43 +198,43 @@ public function delete(Order $order): bool
         $total = 0;
 
         foreach ($items as $itemData) {
-            $pricingType  = $itemData['pricing_type'] ?? 'per_sqin';
-            $width        = (float) ($itemData['width']  ?? 0);
-            $height       = (float) ($itemData['height'] ?? 0);
-            $quantity     = (int)   ($itemData['quantity'] ?? 1);
-            $rate         = (float) $itemData['rate_per_inch'];
+            $pricingType = $itemData['pricing_type'] ?? 'per_sqin';
+            $width = (float) ($itemData['width'] ?? 0);
+            $height = (float) ($itemData['height'] ?? 0);
+            $quantity = (int) ($itemData['quantity'] ?? 1);
+            $rate = (float) $itemData['rate_per_inch'];
 
             if ($pricingType === 'per_piece') {
                 // Flat rate per piece — dimensions irrelevant to price
                 $squareInches = round($width * $height, 2);
-                $totalPrice   = round($rate * $quantity, 2);
+                $totalPrice = round($rate * $quantity, 2);
             } else {
                 // Default: rate per square inch
                 $squareInches = round($width * $height, 2);
-                $totalPrice   = round($squareInches * $rate * $quantity, 2);
+                $totalPrice = round($squareInches * $rate * $quantity, 2);
             }
 
             $total += $totalPrice;
 
             $item = OrderItem::create([
-                'order_id'      => $order->id,
-                'width'         => $width,
-                'height'        => $height,
+                'order_id' => $order->id,
+                'width' => $width,
+                'height' => $height,
                 'square_inches' => $squareInches,
                 'rate_per_inch' => $rate,
-                'total_price'   => $totalPrice,
-                'design_name'   => $itemData['design_name'] ?? null,
-                'quantity'      => $quantity,
-                'pricing_type'  => $pricingType,
+                'total_price' => $totalPrice,
+                'design_name' => $itemData['design_name'] ?? null,
+                'quantity' => $quantity,
+                'pricing_type' => $pricingType,
             ]);
 
-            if (!empty($itemData['files'])) {
+            if (! empty($itemData['files'])) {
                 foreach ($itemData['files'] as $file) {
                     if ($file instanceof UploadedFile) {
                         $path = $file->store('design-files', 'public');
                         DesignFile::create([
                             'order_item_id' => $item->id,
-                            'file_path'     => $path,
+                            'file_path' => $path,
                             'original_name' => $file->getClientOriginalName(),
                         ]);
                     }
@@ -251,6 +252,7 @@ public function delete(Order $order): bool
     private function generateOrderNumber(): string
     {
         $last = Order::max('id') ?? 0;
-        return 'ORD-' . str_pad($last + 1, 5, '0', STR_PAD_LEFT);
+
+        return 'ORD-'.str_pad($last + 1, 5, '0', STR_PAD_LEFT);
     }
 }

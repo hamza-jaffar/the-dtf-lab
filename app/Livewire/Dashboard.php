@@ -6,9 +6,10 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Payments;
 use App\Enums\OrderStatus;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Illuminate\Support\Facades\DB;
 
 #[Title('Dashboard')]
 class Dashboard extends Component
@@ -24,6 +25,28 @@ class Dashboard extends Component
             'completed_orders' => Order::where('status', OrderStatus::Completed->value)->count(),
             'total_purchases'  => \App\Models\Purchase::sum('total_price'),
         ];
+
+        $typeTotals = Order::select('type')
+            ->selectRaw('SUM(total_amount) as total_sales')
+            ->groupBy('type')
+            ->pluck('total_sales', 'type')
+            ->mapWithKeys(fn ($value, $key) => [$key => (float) $value]);
+
+        $typeEarnings = collect([
+            'dtf' => __('DTF'),
+            'dtg' => __('DTG'),
+            'reflector_vinyl' => __('Reflector Vinyl'),
+            'embroidery' => __('Embroidery'),
+            'sublimation' => __('Sublimation'),
+            'screen_printing' => __('Screen Printing'),
+            'rhinestone' => __('Rhinestone'),
+        ])->map(function ($label, $type) use ($typeTotals) {
+            return [
+                'key' => $type,
+                'label' => $label,
+                'earnings' => (float) ($typeTotals[$type] ?? 0),
+            ];
+        })->values();
 
         $recentOrders = Order::with('customer')
             ->latest()
@@ -42,6 +65,7 @@ class Dashboard extends Component
 
         return view('livewire.dashboard', [
             'stats'              => $stats,
+            'typeEarnings'       => $typeEarnings,
             'recentOrders'       => $recentOrders,
             'recentPayments'     => $recentPayments,
             'statusDistribution' => $statusDistribution,

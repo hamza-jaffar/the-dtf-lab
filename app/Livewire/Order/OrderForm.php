@@ -23,6 +23,7 @@ class OrderForm extends Component
     public ?int   $orderId    = null;
     public ?int   $customerId = null;
     public string $status     = 'pending';
+    public string $type       = 'dtf';
     public ?float $paidAmount = null;
     public string $notes      = '';
 
@@ -79,6 +80,7 @@ class OrderForm extends Component
         $this->items       = [];
         $this->customerId  = $order->customer_id;
         $this->status      = $order->status->value;
+        $this->type        = $order->type ?? 'dtf';
         $this->paidAmount  = (float) $order->paid_amount;
         $this->notes       = $order->notes ?? '';
         $this->isEditing   = true;
@@ -136,6 +138,7 @@ class OrderForm extends Component
         $rules = [
             'customerId' => 'required|exists:customers,id',
             'status'     => 'required|in:' . implode(',', array_column(OrderStatus::cases(), 'value')),
+            'type'       => 'required|in:dtf,dtg,screen_printing,reflector_vinyl,embroidery,sublimation,rhinestone',
             'notes'      => 'nullable|string|max:1000',
             'items'      => 'required|array|min:1',
         ];
@@ -173,6 +176,7 @@ class OrderForm extends Component
         $orderData = [
             'customer_id' => (int) $this->customerId,
             'status'      => (string) $this->status,
+            'type'        => (string) $this->type,
             'paid_amount' => $this->paidAmount !== null && $this->paidAmount !== '' ? (float) $this->paidAmount : 0,
             'notes'       => $this->notes ?: null,
         ];
@@ -213,8 +217,9 @@ class OrderForm extends Component
 
     private function resetAll(): void
     {
-        $this->reset(['orderId', 'customerId', 'status', 'paidAmount', 'notes', 'items', 'isEditing']);
+        $this->reset(['orderId', 'customerId', 'status', 'type', 'paidAmount', 'notes', 'items', 'isEditing']);
         $this->status = 'pending';
+        $this->type = 'dtf';
         $this->resetValidation();
         
         // Re-fetch default rate to ensure it's current

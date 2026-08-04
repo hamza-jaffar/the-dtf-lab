@@ -43,6 +43,7 @@ it('updates an existing order from the form component', function () {
         ->set('orderId', $order->id)
         ->set('customerId', $customer->id)
         ->set('status', OrderStatus::Completed->value)
+        ->set('type', 'screen_printing')
         ->set('paidAmount', 50)
         ->set('notes', 'updated notes')
         ->set('items', [[
@@ -61,6 +62,7 @@ it('updates an existing order from the form component', function () {
 
     expect($order->status)->toBe(OrderStatus::Completed)
         ->and($order->customer_id)->toBe($customer->id)
+        ->and($order->type)->toBe('screen_printing')
         ->and((float) $order->paid_amount)->toBe(50.0)
         ->and($order->notes)->toBe('updated notes')
         ->and($order->items)->toHaveCount(1);

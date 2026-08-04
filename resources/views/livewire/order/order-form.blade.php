@@ -33,6 +33,17 @@
                 @endforeach
             </flux:select>
 
+            <flux:select wire:model="type" :label="__('Order Type')">
+                <flux:select.option value="dtf">DTF</flux:select.option>
+                <flux:select.option value="dtg">DTG</flux:select.option>
+                <flux:select.option value="screen_printing">Screen Printing</flux:select.option>
+                <flux:select.option value="rhinestone">Rhinestone</flux:select.option>
+                <flux:select.option value="reflector_vinyl">REFLECTOR VINYL</flux:select.option>
+                <flux:select.option value="embroidery">EMBROIDERY</flux:select.option>
+                <flux:select.option value="sublimation">SUBLIMATION</flux:select.option>
+
+            </flux:select>
+
             <flux:input wire:model.live="paidAmount" :label="__('Paid Amount')" type="number" step="any" placeholder="0.00" />
         </div>
 

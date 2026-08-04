@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->enum("type", ['dtf', 'screen_printing', 'rhinestone'])->default('dtf');
+            $table->enum('type', ['dtf', 'dtg', 'reflector_vinyl', 'embroidery', 'sublimation', 'screen_printing', 'rhinestone'])->default('dtf');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('order', function (Blueprint $table) {
-            
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropColumn('type');
         });
     }
 };
