@@ -76,6 +76,7 @@ class OrderForm extends Component
 
         $this->defaultRate = (float) ($settings->get(CompanySettingKey::DEFAULT_RATE) ?? 0);
         $this->orderId     = $order->id;
+        $this->items       = [];
         $this->customerId  = $order->customer_id;
         $this->status      = $order->status->value;
         $this->paidAmount  = (float) $order->paid_amount;
@@ -160,13 +161,20 @@ class OrderForm extends Component
     // ------------------------------------------------------------------
     public function save(OrderService $service): void
     {
+        $this->items = $this->normalizeItems($this->items);
+
+        if ($this->isEditing && blank($this->orderId)) {
+            Flux::toast(variant: 'error', text: 'Unable to update this order because the order reference is missing.');
+            return;
+        }
+
         $this->validate();
 
         $orderData = [
-            'customer_id' => $this->customerId,
-            'status'      => $this->status,
-            'paid_amount' => $this->paidAmount,
-            'notes'       => $this->notes,
+            'customer_id' => (int) $this->customerId,
+            'status'      => (string) $this->status,
+            'paid_amount' => $this->paidAmount !== null && $this->paidAmount !== '' ? (float) $this->paidAmount : 0,
+            'notes'       => $this->notes ?: null,
         ];
 
         if ($this->isEditing) {
@@ -187,6 +195,22 @@ class OrderForm extends Component
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+    private function normalizeItems(array $items): array
+    {
+        return array_values(array_map(function (array $item): array {
+            return [
+                'pricing_type'   => $item['pricing_type'] ?? 'per_sqin',
+                'width'          => $item['width'] ?? '',
+                'height'         => $item['height'] ?? '',
+                'rate_per_inch'  => $item['rate_per_inch'] ?? '',
+                'quantity'       => (int) ($item['quantity'] ?? 1),
+                'design_name'    => $item['design_name'] ?? '',
+                'files'          => $item['files'] ?? [],
+                'existing_files' => $item['existing_files'] ?? [],
+            ];
+        }, $items));
+    }
+
     private function resetAll(): void
     {
         $this->reset(['orderId', 'customerId', 'status', 'paidAmount', 'notes', 'items', 'isEditing']);

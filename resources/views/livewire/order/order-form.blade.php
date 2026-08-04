@@ -1,4 +1,4 @@
-<flux:modal name="order-form-modal" class="md:w-195 space-y-6" wire:ignore.self>
+<flux:modal name="order-form-modal" class="md:w-195 space-y-6">
 
     {{-- Header --}}
     <div>
@@ -10,7 +10,7 @@
         </flux:subheading>
     </div>
 
-    <form wire:submit="save" class="space-y-6">
+    <form wire:submit.prevent="save" novalidate class="space-y-6">
 
         {{-- Order Meta --}}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -58,9 +58,10 @@
                 },
 
                 lineTotal(item) {
+                    if (!item) return '—';
                     const r = parseFloat(item.rate_per_inch) || 0;
                     const q = parseInt(item.quantity)        || 1;
-                    if (item.pricing_type === 'per_piece') {
+                    if ((item.pricing_type ?? 'per_sqin') === 'per_piece') {
                         return (r * q).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
                     }
                     const w = parseFloat(item.width)  || 0;
@@ -69,6 +70,7 @@
                 },
 
                 squareInches(item) {
+                    if (!item) return '0';
                     const w = parseFloat(item.width)  || 0;
                     const h = parseFloat(item.height) || 0;
                     return (w * h).toLocaleString(undefined, { maximumFractionDigits: 2 });

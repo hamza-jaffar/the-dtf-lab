@@ -24,7 +24,7 @@ class OrderList extends Component
     #[On('payment-saved')]
     public function refresh(): void
     {
-        // Simply refresh the component
+        $this->resetPage();
     }
 
     #[Url(as: 'search')]

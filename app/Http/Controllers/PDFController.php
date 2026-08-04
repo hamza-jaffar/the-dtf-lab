@@ -65,16 +65,73 @@ class PDFController extends Controller
         return $pdf->stream('orders-summary.pdf');
     }
 
-    public function customerPayments(Customer $customer)
+    public function purchasesSummary(Request $request, \App\Services\PurchaseService $service)
     {
-        $payments = Payments::whereHas('order', fn($q) => $q->where('customer_id', $customer->id))
-            ->with('order')
-            ->orderBy('payment_date', 'desc')
+        $search      = (string) $request->get('search', '');
+        $startDate   = $request->get('start_date');
+        $endDate     = $request->get('end_date');
+        $sortBy      = $request->get('sort', 'purchase_date');
+        $sortDir     = $request->get('dir', 'desc');
+
+        $purchases = \App\Models\Purchase::query()
+            ->when($startDate, fn($q) => $q->whereDate('purchase_date', '>=', $startDate))
+            ->when($endDate, fn($q) => $q->whereDate('purchase_date', '<=', $endDate))
+            ->when($search, function ($query) use ($search) {
+                $query->where('item_name', 'like', '%' . $search . '%')
+                      ->orWhere('notes', 'like', '%' . $search . '%');
+            })
+            ->orderBy($sortBy, $sortDir)
             ->get();
 
+        $stats = $service->getStats($startDate, $endDate);
+
         $data = array_merge($this->getCompanyData(), [
-            'customer' => $customer,
-            'payments' => $payments,
+            'purchases' => $purchases,
+            'stats' => $stats,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        $pdf = Pdf::loadView('pdf.purchases-summary', $data);
+        return $pdf->stream('purchases-summary.pdf');
+    }
+
+    public function customerPayments(Customer $customer)
+    {
+        $orders = Order::where('customer_id', $customer->id)
+            ->get()
+            ->map(function ($order) {
+                return (object)[
+                    'type'         => 'order',
+                    'date'         => $order->created_at,
+                    'order_number' => $order->order_number,
+                    'method'       => 'Order Billed',
+                    'notes'        => $order->notes,
+                    'debit'        => $order->effective_total,
+                    'credit'       => 0,
+                ];
+            });
+
+        $payments = Payments::whereHas('order', fn($q) => $q->where('customer_id', $customer->id))
+            ->with('order')
+            ->get()
+            ->map(function ($payment) {
+                return (object)[
+                    'type'         => 'payment',
+                    'date'         => $payment->payment_date,
+                    'order_number' => $payment->order->order_number,
+                    'method'       => 'Payment (' . \Illuminate\Support\Str::headline($payment->payment_method) . ')',
+                    'notes'        => $payment->notes,
+                    'debit'        => 0,
+                    'credit'       => $payment->amount,
+                ];
+            });
+
+        $transactions = $orders->concat($payments)->sortBy('date')->values();
+
+        $data = array_merge($this->getCompanyData(), [
+            'customer'     => $customer,
+            'transactions' => $transactions,
         ]);
 
         $pdf = Pdf::loadView('pdf.customer-payments', $data);

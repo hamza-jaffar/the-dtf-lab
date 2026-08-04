@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\Artisan;
 //     return 'Storage link successfully';
 // });
 
+// Route::get('/migrate', function () {
+//     Artisan::call('migrate --force');
+//     return 'Migration run successfully';
+// });
+
 
 Route::redirect('/', 'login')->name('home');
 
@@ -23,9 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('customers', Customer::class)->name('customers');
     Route::livewire('orders', OrderList::class)->name('orders');
     Route::livewire('orders/{id}', \App\Livewire\Order\OrderDetail::class)->name('orders.detail');
+    Route::livewire('purchases', \App\Livewire\Purchase\Purchase::class)->name('purchases');
 
     Route::get('orders/{order}/invoice', [\App\Http\Controllers\PDFController::class, 'orderInvoice'])->name('orders.invoice.pdf');
     Route::get('orders/export/pdf', [\App\Http\Controllers\PDFController::class, 'ordersSummary'])->name('orders.export.pdf');
+    Route::get('purchases/export/pdf', [\App\Http\Controllers\PDFController::class, 'purchasesSummary'])->name('purchases.export.pdf');
     Route::get('customers/{customer}/payments', [\App\Http\Controllers\PDFController::class, 'customerPayments'])->name('customers.payments.pdf');
 });
 

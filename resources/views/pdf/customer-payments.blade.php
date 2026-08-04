@@ -27,21 +27,34 @@
             <tr>
                 <th>Date</th>
                 <th>Order #</th>
-                <th>Method</th>
+                <th>Description</th>
                 <th>Notes</th>
-                <th class="text-right">Amount</th>
+                <th class="text-right">Charge</th>
+                <th class="text-right">Payment</th>
+                <th class="text-right">Balance</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($payments as $payment)
+            @php $balance = 0; @endphp
+            @forelse($transactions as $transaction)
+                @php 
+                    $balance += $transaction->debit;
+                    $balance -= $transaction->credit;
+                @endphp
                 <tr>
-                    <td>{{ $payment->payment_date->format('d M Y H:i') }}</td>
-                    <td class="font-bold">{{ $payment->order->order_number }}</td>
-                    <td>{{ Str::headline($payment->payment_method) }}</td>
-                    <td>{{ $payment->notes }}</td>
-                    <td class="text-right font-bold text-success">{{ $currency_symbol }} {{ number_format($payment->amount, 2) }}</td>
+                    <td>{{ $transaction->date->format('d M Y H:i') }}</td>
+                    <td class="font-bold">{{ $transaction->order_number }}</td>
+                    <td>{{ $transaction->method }}</td>
+                    <td>{{ $transaction->notes }}</td>
+                    <td class="text-right" style="color: #c1121f;">{{ $transaction->debit > 0 ? $currency_symbol . ' ' . number_format($transaction->debit, 2) : '-' }}</td>
+                    <td class="text-right text-success">{{ $transaction->credit > 0 ? $currency_symbol . ' ' . number_format($transaction->credit, 2) : '-' }}</td>
+                    <td class="text-right font-bold">{{ $currency_symbol }} {{ number_format($balance, 2) }}</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="7" class="text-center">No transaction history found.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 

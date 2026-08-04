@@ -22,6 +22,7 @@ class Dashboard extends Component
             'total_customers'  => Customer::count(),
             'total_orders'     => Order::count(),
             'completed_orders' => Order::where('status', OrderStatus::Completed->value)->count(),
+            'total_purchases'  => \App\Models\Purchase::sum('total_price'),
         ];
 
         $recentOrders = Order::with('customer')
